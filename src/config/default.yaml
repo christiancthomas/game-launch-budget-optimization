@@ -1,0 +1,63 @@
+# This config defines the optimization problem: allocate ad spend across channels
+# to maximize conversions under budget constraints with diminishing returns.
+
+# Overall budget and time horizon
+budget:
+  total: 100000.0  # Total marketing budget ($)
+  currency: "USD"
+
+horizon_days: 30  # Campaign duration
+
+# Marketing channels with their constraints
+channels:
+  - name: "Google"
+    min_spend: 5000.0     # Minimum spend required ($)
+    max_spend: 40000.0    # Maximum spend allowed ($)
+
+  - name: "Meta"
+    min_spend: 3000.0
+    max_spend: 35000.0
+
+  - name: "TikTok"
+    min_spend: 8000.0
+    max_spend: 50000.0
+
+  - name: "Reddit"
+    min_spend: 2000.0
+    max_spend: 25000.0
+
+  - name: "X"
+    min_spend: 1000.0
+    max_spend: 15000.0
+
+# Synthetic data generation parameters
+synth_data:
+  random_seed: 42
+
+  # Realistic channel performance parameter ranges for our synthetic data
+  cpc_range: [0.50, 3.00]      # Cost per click ($)
+  ctr_range: [0.01, 0.05]      # Click-through rate
+  cvr_range: [0.01, 0.05]      # Conversion rate
+
+  # Quadratic curve parameters: conversions = a*spend - b*spend^2
+  # Higher 'a' = better initial performance, higher 'b' = faster diminishing returns
+  curve_params:
+    a_range: [0.001, 0.01]     # Linear coefficient range
+    b_range: [1e-8, 1e-6]      # Quadratic coefficient range (diminishing returns)
+
+# Optimization settings
+optimization:
+  solver: "scipy_minimize"     # QP solver backend
+  method: "SLSQP"             # Sequential Least Squares Programming
+  tolerance: 1e-6             # Convergence tolerance
+  max_iterations: 1000        # Maximum solver iterations
+
+# Output configuration
+output:
+  results_dir: "experiments/results"
+  figures_dir: "experiments/results/figures"
+
+  # File naming convention
+  allocations_file: "baseline_allocations.csv"
+  summary_file: "optimization_summary.yaml"
+  plot_file: "allocations_baseline.png"

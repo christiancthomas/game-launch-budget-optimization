@@ -35,16 +35,9 @@ setup:
 	@echo "💡 For developers, activate the virtual environment with:"
 	@echo "   source venv/bin/activate"
 
-# Test target: Run pytest (placeholder for now, will fill in with real tests later)
+# Test target: Run pytest
 test: check-venv
 	@echo "🧪 Running tests..."
-	@if [ ! -d "tests" ] || [ -z "$$(ls -A tests)" ]; then \
-		echo "📝 No tests found yet. Creating placeholder test..."; \
-		mkdir -p tests; \
-		echo "def test_placeholder():" > tests/test_placeholder.py; \
-		echo "    \"\"\"Placeholder test to make 'make test' work.\"\"\"" >> tests/test_placeholder.py; \
-		echo "    assert True" >> tests/test_placeholder.py; \
-	fi
 	venv/bin/python -m pytest tests/ -v
 
 # Baseline target: Run synth -> optimize pipeline (placeholder for future milestones)

@@ -71,13 +71,4 @@ venv.bak/
 # Project specific
 data/raw/*.csv
 experiments/results/
-*.logpiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Environments
-venv/
+*.log

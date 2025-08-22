@@ -1,0 +1,32 @@
+name: PR Quality Check
+
+on:
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies and setup environment
+      run: make setup
+
+    - name: Run linting checks
+      run: make lint
+
+    - name: Run tests
+      run: make test
+
+    - name: Check code formatting
+      run: |
+        # Run black in check mode (don't modify files)
+        venv/bin/black --check src/ tests/

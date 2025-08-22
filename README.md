@@ -52,7 +52,7 @@ possible.
 
 ### Prerequisites
 
-- Python 3.8+ installed on your system
+- Python 3.13+ installed on your system
 - Git (for cloning the repository)
 
 ### Quick Start

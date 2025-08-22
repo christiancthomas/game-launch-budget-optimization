@@ -19,7 +19,7 @@ def load_config(config_path: str):
         try:
             config = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            raise yaml.YAMLError(f"Error parsing YAML file {config_path}: {e}")
+            raise ValueError(f"Error parsing YAML file {config_path}: {e}")
 
     _validate_config(config)
     return config

@@ -1,6 +1,6 @@
 # Game Launch Budget Optimization - Makefile
 # A handy build automation tool to make setup, running, and testing easier!
-# Activates .venv and defines setup, baseline, test targets
+# Activates venv and defines setup, baseline, test targets
 
 .PHONY: help setup test baseline clean lint format check-venv
 

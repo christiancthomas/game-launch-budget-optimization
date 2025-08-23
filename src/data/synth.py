@@ -77,7 +77,21 @@ def sample_channel_metrics_for_channel(channel_name: str, config: dict):
 
 
 def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
-    """Turn funnel metrics into (a,b) curve coefficients."""
+    """
+    Turn funnel metrics into (a,b) curve coefficients.
+
+    Business logic:
+        Models diminishing returns — each extra dollar brings in fewer conversions
+        because you start reaching lower-quality audiences and face bid competition.
+
+    Math:
+        `conversions = a * spend - b * spend^2`
+        - 'a' is the initial conversions per dollar (≈ CVR * CTR / CPC)
+        - 'b' is the curvature that flattens performance as spend grows
+
+    This is intentionally simple for V1: concave, monotone-increasing in our operating
+    range, and easy to optimize with quadratic programming.
+    """
 
     # Key mathematical principle: conversions = a × spend - b × spend²
     a = (ctr * cvr) / cpc  # this is our base efficiency, or performance at low spend
@@ -95,7 +109,20 @@ def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
 
 
 def generate_channel_benchmarks(config: dict) -> list[dict]:
-    """Generate benchmarks for all channels."""
+    """
+    Generate benchmarks for all channels.
+
+    Business logic:
+        Create realistic marketing channel performance data that reflects
+        real-world differences (Google has higher CPC but better conversion,
+        TikTok has cheaper clicks but lower intent).
+
+    Math:
+        For each channel: sample base metrics → apply personality → derive quadratic
+        parameters → validate mathematical properties (positive ROI, concavity).
+
+    Output feeds directly into quadratic programming solver.
+    """
     random.seed(config["synth_data"]["random_seed"])
 
     benchmarks = []

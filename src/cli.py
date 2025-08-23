@@ -16,7 +16,7 @@ def cmd_synth(args):
     benchmarks = generate_channel_benchmarks(config)
 
     # Create output directory if needed
-    output_path = Path(args.output)
+    output_path = Path(args.out)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     write_benchmarks_csv(benchmarks, str(output_path))
@@ -44,7 +44,7 @@ def main():
         "--config", default="src/config/default.yaml", help="Path to config file"
     )
     synth_parser.add_argument(
-        "--output", default="data/raw/channel_benchmarks.csv", help="Output CSV path"
+        "--out", default="data/raw/channel_benchmarks.csv", help="Output CSV path"
     )
     synth_parser.set_defaults(func=cmd_synth)
 

@@ -21,8 +21,8 @@ def sample_config():
     return {
         "budget": {"total": 50000.0, "currency": "USD"},
         "channels": [
-            {"name": "Google", "min_spend": 5000.0, "max_spend": 20000.0},
-            {"name": "Meta", "min_spend": 3000.0, "max_spend": 15000.0},
+            {"name": "google", "min_spend": 5000.0, "max_spend": 20000.0},
+            {"name": "meta", "min_spend": 3000.0, "max_spend": 15000.0},
         ],
         "synth_data": {"random_seed": 42, "cpc_range": [0.5, 3.0]},
         "optimization": {"solver": "scipy_minimize"},
@@ -52,11 +52,11 @@ def test_missing_file_fails():
 def test_helper_functions(sample_config):
     """Helper functions extract the right stuff."""
     names = get_channel_names(sample_config)
-    assert names == ["Google", "Meta"]
+    assert names == ["google", "meta"]
 
     constraints = get_channel_constraints(sample_config)
-    assert "Google" in constraints
-    assert constraints["Google"]["max_spend"] == 20000.0
+    assert "google" in constraints
+    assert constraints["google"]["max_spend"] == 20000.0
 
     budget = get_total_budget(sample_config)
     assert budget == 50000.0

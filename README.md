@@ -1,5 +1,7 @@
 # Game Launch Marketing Budget Optimization
 
+![CI](https://github.com/christiancthomas/game-launch-budget-optimization/actions/workflows/pr-check.yml/badge.svg) ![Python](https://img.shields.io/badge/python-3.13%2B-blue)
+
 ## Problem summary
 
 Game launches often involve a flurry of marketing activity across multiple

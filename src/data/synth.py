@@ -56,9 +56,9 @@ def channel_adjustments(base_metrics: dict, channel_name: str):
     """Apply channel personality multipliers."""
 
     # Get the personality profile for this channel
-    profile = CHANNEL_PROFILES.get(channel_name.lower(), {})
+    profile = CHANNEL_PROFILES.get(channel_name, {})
 
-    # Apply multipliers to base metrics
+    # Apply multipliers to the sampled base metrics
     return {
         "cpc": base_metrics["cpc"] * profile.get("cpc_multiplier", 1.0),
         "ctr": base_metrics["ctr"] * profile.get("ctr_multiplier", 1.0),
@@ -81,19 +81,22 @@ def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
     Turn funnel metrics into (a,b) curve coefficients.
 
     Business logic:
-        Models diminishing returns — each extra dollar brings in fewer conversions
-        because you start reaching lower-quality audiences and face bid competition.
+        This models simplified diminishing returns — after the saturation point,
+        each extra dollar brings in fewer conversions because you start reaching
+        lower-quality audiences and face bid competition.
 
     Math:
-        `conversions = a * spend - b * spend^2`
+        `conversions = (a * spend) - (b * spend²)`
         - 'a' is the initial conversions per dollar (≈ CVR * CTR / CPC)
         - 'b' is the curvature that flattens performance as spend grows
 
     This is intentionally simple for V1: concave, monotone-increasing in our operating
     range, and easy to optimize with quadratic programming.
+
+    V2 will introduce more complexity.
     """
 
-    # Key mathematical principle: conversions = a × spend - b × spend²
+    # Key mathematical principle: conversions = (a * spend) - (b * spend²)
     a = (ctr * cvr) / cpc  # this is our base efficiency, or performance at low spend
 
     # We want the curve to slow down as we approach max_spend
@@ -101,7 +104,7 @@ def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
     target_eff_drop = 0.3  # 30% efficiency loss at max spend
     # - placeholder value, may end up adjusting
 
-    # Solve: efficiency_at_max = base_efficiency * (1 - target_drop)
+    # Solve: efficiency_at_max = base_efficiency * (1 - target_eff_drop)
     # This gives us the 'b' parameter
     b = (a * target_eff_drop) / max_spend
 
@@ -113,9 +116,9 @@ def generate_channel_benchmarks(config: dict) -> list[dict]:
     Generate benchmarks for all channels.
 
     Business logic:
-        Create realistic marketing channel performance data that reflects
+        Create realistic marketing channel performance data that roughly reflects
         real-world differences (Google has higher CPC but better conversion,
-        TikTok has cheaper clicks but lower intent).
+        TikTok has cheaper clicks but lower intent, etc.).
 
     Math:
         For each channel: sample base metrics → apply personality → derive quadratic

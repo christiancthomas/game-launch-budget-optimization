@@ -26,7 +26,7 @@ channels:
     min_spend: 2000.0
     max_spend: 25000.0
 
-  - name: "x"
+  - name: "x" # formerly Twitter
     min_spend: 1000.0
     max_spend: 15000.0
 

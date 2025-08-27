@@ -63,7 +63,7 @@ def cmd_optimize(args):
     print("\n✅ OPTIMIZATION COMPLETE!")
     print("=" * 60)
     print("OPTIMAL ALLOCATION:")
-    print(f"{'Channel':15} | {'Spend':8} | {'Conversions':12} | {'Eff (conv/$)':12}")
+    print(f"{'Channel':15} | {'Spend':8} | {'Conversions':12} | {'CPA':8}")
     print("-" * 60)
 
     total_allocated = 0
@@ -73,21 +73,24 @@ def cmd_optimize(args):
         channel_name = ch["channel"]
         spend = allocation[channel_name]
         conversions = quad_conversions(spend, ch["curve_a"], ch["curve_b"])
-        efficiency = conversions / spend if spend > 0 else 0
+        cpa = spend / conversions if conversions > 0 else float("inf")
 
         total_allocated += spend
         total_conversions += conversions
 
         print(
             f"{channel_name:15} | ${spend:7.0f} | "
-            f"{conversions:7.0f} conv | {efficiency:4.1f} conv/$"
+            f"{conversions:7.0f} conv | ${cpa:5.0f} CPA"
         )
 
     print("-" * 60)
+    total_cpa = (
+        total_allocated / total_conversions if total_conversions > 0 else float("inf")
+    )
     print(
         f"{'TOTAL':15} | ${total_allocated:7.0f} | "
         f"{total_conversions:7.0f} conv | "
-        f"{total_conversions/total_allocated:4.1f} conv/$"
+        f"${total_cpa:5.0f} CPA"
     )
     print(f"\nBudget utilization: {total_allocated/budget*100:.1f}%")
 
@@ -101,10 +104,17 @@ def cmd_optimize(args):
                     "predicted_conversions": quad_conversions(
                         allocation[ch["channel"]], ch["curve_a"], ch["curve_b"]
                     ),
-                    "efficiency_conv_per_dollar": quad_conversions(
-                        allocation[ch["channel"]], ch["curve_a"], ch["curve_b"]
-                    )
-                    / allocation[ch["channel"]],
+                    "cost_per_acquisition": (
+                        allocation[ch["channel"]]
+                        / quad_conversions(
+                            allocation[ch["channel"]], ch["curve_a"], ch["curve_b"]
+                        )
+                        if quad_conversions(
+                            allocation[ch["channel"]], ch["curve_a"], ch["curve_b"]
+                        )
+                        > 0
+                        else float("inf")
+                    ),
                 }
                 for ch in benchmarks
             ]

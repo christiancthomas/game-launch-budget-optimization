@@ -11,32 +11,32 @@ import random
 CHANNEL_PROFILES = {
     "google": {
         "cpc_multiplier": 1.0,  # baseline
-        "ctr_multiplier": 1.3,  # high engagement
+        "ctr_multiplier": 2.0,  # very high engagement
         "cvr_multiplier": 2.0,  # strong conversion
         "saturation_rate": 0.2,  # moderate saturation
     },
     "meta": {
-        "cpc_multiplier": 1.0,  # baseline
+        "cpc_multiplier": 1.3,  # decent click cost
         "ctr_multiplier": 1.0,  # good engagement
-        "cvr_multiplier": 1.8,  # strong conversion
+        "cvr_multiplier": 1.2,  # good conversion
         "saturation_rate": 0.1,  # slower saturation
     },
     "tiktok": {
-        "cpc_multiplier": 0.7,  # moderately cheap clicks
+        "cpc_multiplier": 0.5,  # cheap clicks
         "ctr_multiplier": 1.4,  # high engagement
         "cvr_multiplier": 1.5,  # decent conversion
         "saturation_rate": 0.15,  # slower saturation
     },
     "reddit": {
         "cpc_multiplier": 0.8,  # cheap clicks
-        "ctr_multiplier": 1.2,  # high engagement
-        "cvr_multiplier": 1.6,  # good conversions
+        "ctr_multiplier": 1.0,  # moderate engagement
+        "cvr_multiplier": 1.2,  # good conversions
         "saturation_rate": 0.25,  # moderate saturation
     },
     "x": {
         "cpc_multiplier": 0.7,  # moderately cheap clicks
-        "ctr_multiplier": 1.1,  # moderate engagement
-        "cvr_multiplier": 1.2,  # improved conversion
+        "ctr_multiplier": 1.0,  # moderate engagement
+        "cvr_multiplier": 1.0,  # moderate conversion
         "saturation_rate": 0.35,  # high saturation
     },
 }

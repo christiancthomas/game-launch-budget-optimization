@@ -2,14 +2,15 @@
 # A handy build automation tool to make setup, running, and testing easier!
 # Activates venv and defines setup, baseline, test targets
 
-.PHONY: help setup test baseline clean lint format check-venv
+.PHONY: help setup test baseline clean lint format check-venv synth
 
 # Default target
 help:
 	@echo "Available targets:"
 	@echo "  setup     - Creates venv, installs dependencies, and sets up pre-commit hooks"
 	@echo "  test      - Runs all tests"
-	@echo "  baseline  - Generates synthetic data and runs optimization pipeline"
+	@echo "  synth     - Generates synthetic channel benchmark data"
+	@echo "  baseline  - Generates synthetic data and runs optimization (future)"
 	@echo "  lint      - Runs linting checks"
 	@echo "  format    - Formats code with black and ruff"
 	@echo "  clean     - Removes virtual environment and cache files"
@@ -40,9 +41,20 @@ test: check-venv
 	@echo "🧪 Running tests..."
 	venv/bin/python -m pytest tests/ -v
 
+# Synth target: Generate synthetic data
+synth: check-venv
+	@echo "🎯 Generating synthetic channel benchmarks..."
+	venv/bin/python -m src.cli synth --out data/raw/channel_benchmarks.csv
+
 # Baseline target: Run synth -> optimize pipeline
 baseline: check-venv
 	@echo "🎯 Running baseline optimization pipeline..."
+	@echo "📊 Step 1: Generating synthetic channel data..."
+	venv/bin/python -m src.cli synth
+	@echo "🚀 Step 2: Running budget optimization..."
+	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv
+	@echo "✅ Baseline pipeline complete!"
+	@echo "📄 Results saved to data/processed/optimization_results.csv"
 	@echo "📊 Step 1: Generating synthetic channel data..."
 	venv/bin/python -m src.cli synth
 	@echo "🚀 Step 2: Running budget optimization..."

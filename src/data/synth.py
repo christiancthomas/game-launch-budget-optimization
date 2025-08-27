@@ -11,33 +11,33 @@ import random
 CHANNEL_PROFILES = {
     "google": {
         "cpc_multiplier": 1.0,  # baseline
-        "ctr_multiplier": 1.2,  # high engagement
-        "cvr_multiplier": 1.5,  # strong conversion
-        "saturation_rate": 0.3,  # moderate saturation
+        "ctr_multiplier": 1.3,  # high engagement
+        "cvr_multiplier": 2.0,  # strong conversion
+        "saturation_rate": 0.2,  # moderate saturation
     },
     "meta": {
         "cpc_multiplier": 1.0,  # baseline
-        "ctr_multiplier": 0.9,  # high engagement
-        "cvr_multiplier": 1.1,  # strong conversion
-        "saturation_rate": 0.15,  # slow saturation
+        "ctr_multiplier": 1.0,  # good engagement
+        "cvr_multiplier": 1.8,  # strong conversion
+        "saturation_rate": 0.1,  # slower saturation
     },
     "tiktok": {
-        "cpc_multiplier": 0.6,  # cheap clicks
-        "ctr_multiplier": 1.3,  # high engagement
-        "cvr_multiplier": 0.7,  # moderate conversion
-        "saturation_rate": 0.2,  # slow saturation
+        "cpc_multiplier": 0.7,  # moderately cheap clicks
+        "ctr_multiplier": 1.4,  # high engagement
+        "cvr_multiplier": 1.5,  # decent conversion
+        "saturation_rate": 0.15,  # slower saturation
     },
     "reddit": {
         "cpc_multiplier": 0.8,  # cheap clicks
-        "ctr_multiplier": 1.1,  # high engagement
-        "cvr_multiplier": 1.0,  # moderate conversion
-        "saturation_rate": 0.4,  # faster saturation
+        "ctr_multiplier": 1.2,  # high engagement
+        "cvr_multiplier": 1.6,  # good conversions
+        "saturation_rate": 0.25,  # moderate saturation
     },
     "x": {
-        "cpc_multiplier": 0.6,  # cheap clicks
-        "ctr_multiplier": 1.0,  # moderate engagement
-        "cvr_multiplier": 0.5,  # low conversion
-        "saturation_rate": 0.6,  # faster saturation
+        "cpc_multiplier": 0.7,  # moderately cheap clicks
+        "ctr_multiplier": 1.1,  # moderate engagement
+        "cvr_multiplier": 1.2,  # improved conversion
+        "saturation_rate": 0.35,  # high saturation
     },
 }
 
@@ -76,7 +76,9 @@ def sample_channel_metrics_for_channel(channel_name: str, config: dict):
     return channel_adjustments(base, channel_name)
 
 
-def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
+def derive_quad_params(
+    cpc: float, ctr: float, cvr: float, max_spend: float, saturation_rate=0.3
+):
     """
     Turn funnel metrics into (a,b) curve coefficients.
 
@@ -99,14 +101,9 @@ def derive_quad_params(cpc: float, ctr: float, cvr: float, max_spend: float):
     # Key mathematical principle: conversions = (a * spend) - (b * spend²)
     a = (ctr * cvr) / cpc  # this is our base efficiency, or performance at low spend
 
-    # We want the curve to slow down as we approach max_spend
-    # Let's say at max_spend, efficiency should drop by some target percentage
-    target_eff_drop = 0.3  # 30% efficiency loss at max spend
-    # - placeholder value, may end up adjusting
-
-    # Solve: efficiency_at_max = base_efficiency * (1 - target_eff_drop)
+    # Solve: efficiency_at_max = base_efficiency * (1 - saturation_rate)
     # This gives us the 'b' parameter
-    b = (a * target_eff_drop) / max_spend
+    b = (a * saturation_rate) / max_spend
 
     return a, b
 
@@ -131,8 +128,19 @@ def generate_channel_benchmarks(config: dict) -> list[dict]:
     benchmarks = []
     for ch in config["channels"]:
         metrics = sample_channel_metrics_for_channel(ch["name"], config)
+
+        # Get channel-specific saturation rate from profile
+        profile = CHANNEL_PROFILES.get(ch["name"], {})
+        saturation_rate = profile.get(
+            "saturation_rate", 0.3
+        )  # Default to 0.3 if not found
+
         a, b = derive_quad_params(
-            metrics["cpc"], metrics["ctr"], metrics["cvr"], ch["max_spend"]
+            metrics["cpc"],
+            metrics["ctr"],
+            metrics["cvr"],
+            ch["max_spend"],
+            saturation_rate,
         )
 
         benchmarks.append(

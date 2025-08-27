@@ -74,10 +74,10 @@ def test_metric_ranges_reasonable():
     benchmarks = generate_channel_benchmarks(config)
 
     for bench in benchmarks:
-        # Should be within or close to config ranges (allowing for channel multipliers)
-        assert 0.1 <= bench["cpc"] <= 10.0, f"CPC out of range: {bench['cpc']}"
-        assert 0.001 <= bench["ctr"] <= 0.20, f"CTR out of range: {bench['ctr']}"
-        assert 0.001 <= bench["cvr"] <= 0.20, f"CVR out of range: {bench['cvr']}"
+        # Should be within reasonable ranges (allowing for channel multipliers)
+        assert 0.05 <= bench["cpc"] <= 10.0, f"CPC out of range: {bench['cpc']}"
+        assert 0.001 <= bench["ctr"] <= 0.25, f"CTR out of range: {bench['ctr']}"
+        assert 0.001 <= bench["cvr"] <= 0.25, f"CVR out of range: {bench['cvr']}"
 
 
 def test_csv_output_works():

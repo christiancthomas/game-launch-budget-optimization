@@ -26,6 +26,9 @@ wheels/
 *.egg
 MANIFEST
 
+# Data
+*.csv
+
 # PyInstaller
 *.manifest
 *.spec

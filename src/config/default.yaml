@@ -35,15 +35,15 @@ synth_data:
   random_seed: 42
 
   # Realistic channel performance parameter ranges for our synthetic data
-  cpc_range: [0.50, 3.00]      # Cost per click ($)
-  ctr_range: [0.01, 0.05]      # Click-through rate
-  cvr_range: [0.01, 0.05]      # Conversion rate
+  cpc_range: [0.10, 0.50]     # Cost per click ($)
+  ctr_range: [0.05, 0.15]     # Click-through rate
+  cvr_range: [0.02, 0.10]     # Conversion rate
 
   # Quadratic curve parameters: conversions = a*spend - b*spend^2
   # Higher 'a' = better initial performance, higher 'b' = faster diminishing returns
   curve_params:
-    a_range: [0.001, 0.01]     # Linear coefficient range
-    b_range: [1e-8, 1e-6]      # Quadratic coefficient range (diminishing returns)
+    a_range: [0.02, 0.1]       # Linear coefficient range
+    b_range: [5e-7, 5e-6]      # Quadratic coefficient range
 
 # Optimization settings
 optimization:

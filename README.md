@@ -54,25 +54,21 @@ The solution combines several key concepts:
 - **Configuration system** (`src/config/`) with YAML-based parameter management
 - **Synthetic data generation** (`src/data/synth.py`) with realistic channel characteristics
 - **Mathematical curve modeling** (`src/features/curves.py`) for diminishing returns
+- **Quadratic Programming Solver** (`src/opt/solve.py`) using SciPy SLSQP optimization
+- **Complete CLI interface** (`src/cli.py`) with `synth` and `optimize` commands
+- **Comprehensive test suite** (30 tests) including end-to-end integration validation
 
-## Current status
+## Current Status: V1 Complete! 🎉
 
-This repository is in its initial setup phase. The core problem framing and
-business context are defined, and the next steps will involve:
+This repository has achieved its **V1 milestone goals**:
 
-- Generating synthetic data to mimic realistic launch scenarios
+✅ **End-to-end optimization pipeline** from synthetic data to optimal budget allocation
+✅ **Production-ready CLI tools** for data generation and optimization
+✅ **Comprehensive test coverage** full integration test suite
+✅ **Mathematical validation** of budget conservation, constraint satisfaction, and business logic
+✅ **Quality controls** with pre-commit hooks, linting, and enforcement of a consistent style
 
-- Fitting channel response curves with diminishing returns
-
-- Building optimization models and running baseline allocation scenarios
-
-### 🚧 In Development
-
-- **Quadratic Programming Solver**: SciPy-based optimizer for budget allocation
-- **End-to-end CLI**: `optimize` command for complete pipeline execution
-- **Results Visualization**: Matplotlib charts showing optimal allocations
-
-### Quick start: How to install dependencies and run baseline optimization
+Future updates will focus on adding more advanced features.
 
 ## Getting Started
 
@@ -106,7 +102,7 @@ possible.
    - Set up pre-commit hooks for code quality
    - Create the project directory structure
 
-3. **Activate the virtual environment:**
+3. **Activate the virtual environment (for development work only):**
 
    ```bash
    source venv/bin/activate
@@ -117,25 +113,65 @@ possible.
    `make lint`, etc.) will work without activation since they are designed to
    use the virtual environment automatically.
 
-4. **Generate synthetic data:**
+4. **Run the complete optimization pipeline:**
 
    ```bash
-   # Create realistic marketing channel benchmarks
-   make synth
+   # Generate synthetic data and run optimization
+   make baseline
    ```
 
-5. **Running tests:**
+5. **Run tests to validate everything works:**
 
    ```bash
    make test
    ```
 
+### CLI Commands Reference
+
+**Basic Commands:**
+
+```bash
+# Generate synthetic data
+python -m src.cli synth [--config CONFIG_FILE] [--out OUTPUT_CSV]
+
+# Run optimization
+python -m src.cli optimize [--benchmarks CSV_FILE] [--budget AMOUNT] [--output RESULTS_CSV]
+
+# Or use Makefile shortcuts
+make synth      # Generate data only
+make baseline   # Generate data + run optimization
+```
+
+**What You'll See:**
+
+```text
+🚀 Running budget optimization...
+💰 Total budget: $100000.0
+📊 Optimizing 5 channels...
+
+✅ OPTIMIZATION COMPLETE!
+OPTIMAL ALLOCATION:
+Channel         | Spend    | Conversions  | CPA
+------------------------------------------------------------
+google          | $   6537 |     157 conv | $   42 CPA
+meta            | $  35000 |    1408 conv | $   25 CPA
+tiktok          | $  20005 |     545 conv | $   37 CPA
+reddit          | $  25000 |    1091 conv | $   23 CPA
+x               | $  13458 |     600 conv | $   22 CPA
+------------------------------------------------------------
+TOTAL           | $ 100000 |    3801 conv | $   26 CPA
+
+Budget utilization: 100.0%
+```
+
 ### Other Useful Commands
 
 - `make help` - See all available commands
+- `make test` - Run test suite
+- `make synth` - Generate synthetic channel data
+- `make baseline` - Run complete synth → optimize pipeline
 - `make lint` - Check code quality using `ruff` and `black`
 - `make format` - Auto-format code
-- `make baseline` - Run optimization pipeline
 - `make clean` - Clean up virtual environment and cache files
 
 ## Mathematical Framework
@@ -157,7 +193,7 @@ Where:
 - `aᵢ` = initial efficiency (conversions per dollar)
 - `bᵢ` = diminishing returns coefficient
 
-This quadratic formulation captures the economic reality that additional spend yields progressively fewer returns due to audience saturation and increased competition.
+**This quadratic formulation captures the economic reality that additional spend yields progressively fewer returns due to audience saturation and increased competition.**
 
 ## Project Structure
 
@@ -166,26 +202,27 @@ src/
 ├── config/          # YAML configuration and loading
 ├── data/            # Synthetic data generation
 ├── features/        # Mathematical curve modeling
-├── opt/             # Optimization solvers (in development)
-└── viz/             # Visualization (in development)
+├── opt/             # Quadratic programming solver
+├── viz/             # Visualization (future)
+└── cli.py           # Command-line interface
 
-tests/               # Comprehensive test suite
-data/raw/            # Generated synthetic datasets
-experiments/         # Results and analysis outputs
+tests/               # 30 comprehensive tests
+data/                # Generated datasets and results
+experiments/         # Analysis outputs
 ```
 
 ## Future Enhancements
 
-**V1 Completion Goals:**
+**V1.1 Next Steps:**
 
-- Complete quadratic programming solver implementation
-- End-to-end optimization pipeline with CSV output
-- Basic visualizations
-- Comprehensive documentation and examples
+- **Visualizations**: Graphical representations showing allocation breakdowns and potentially sensitivity analysis
+- **Results Analysis**: Enhanced CLI output with channel efficiency rankings and ROI insights
+- **Real Data Integration**: Leverage realistic data for more useful analysis
 
 **V2 Advanced Features:**
 
-- More advanced response curves for more sophisticated modeling
-- Sensitivity and seasonality analysis
-- Integration with real marketing attribution data
-- Interactive tools for scenario planning
+- **Advanced Response Curves**: Hill/logistic curves for more sophisticated modeling -- theoretically more realistic
+- **Multi-Objective Optimization**: Optimize for multiple KPIs (conversions, DLC purchases, reactivations, etc.)
+- **Sensitivity Analysis**: Budget sweep analysis and constraint shadow pricing
+- **Seasonality Modeling**: Time-based demand curves and budget allocation over campaign periods
+- **Interactive Scenario Planning**: Interactive features for marketing teams to explore "what-if" scenarios

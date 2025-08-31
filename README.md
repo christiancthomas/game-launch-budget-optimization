@@ -206,18 +206,19 @@ src/
 ├── viz/             # Visualization (future)
 └── cli.py           # Command-line interface
 
-tests/               # 30 comprehensive tests
+tests/               # comprehensive testing to ensure stability
 data/                # Generated datasets and results
 experiments/         # Analysis outputs
 ```
 
 ## Limitations and Next Steps  
 
-This version is a first pass meant to set up the framework. A few areas I’d like to expand in future versions:  
+This version is a first pass meant to set up the framework. There are some notable simplifications / limitations I relied on and could be areas I’d like to expand on in future versions:  
 
-- **Data realism** – The current dataset uses simplified or synthetic values. Pulling in historical campaign data (with proper anonymization) would make the results more meaningful.  
-- **Modeling depth** – The optimization logic makes some straightforward assumptions. Future iterations could test alternative approaches like nonlinear constraints, Bayesian methods, or ML-based demand forecasting.  
-- **Granularity** – Right now the scope is at the channel level. Adding sub-channel or creative-level optimization would make the outputs more actionable.  
+- **Data realism** – The current dataset uses simplified or synthetic values. That makes it easy to test and share, but limits how realistic the outputs are compared to actual campaign performance. A future version could pull in historical spend/outcome data (with anonymization) to validate the model.  
+- **Solver choice** – I used SciPy’s SLSQP solver because it handles both bounds and constraints directly, which maps well to this version of the problem. It’s quick to run in a small python script and works fine with a nonlinear objective. The tradeoff is that SLSQP is a local solver, so results depend on scaling and starting values. Future work might test alternatives like CVXPy or mixed-integer approaches if the problem expands.
+- **Modeling depth** – The optimization logic makes some straightforward assumptions. Future iterations could test alternative approaches like nonlinear constraints, geo-based consideration, Bayesian methods, or ML-based forecasting.  
+- **Granularity** – Right now the scope is at the channel level. Adding geo-level or sub-channel (Meta-FB / Meta-IG, Google-search / Google-YT, etc.) optimization would make the outputs more actionable.  
 - **Usability** – Everything runs through a the console at this stage. A lightweight dashboard, notebooke, or simple interface would make it easier for others to tweak inputs and run scenarios.  
 
 The goal for v1 was to build something clear and working, not final. These notes are here to mark where the project can grow.  

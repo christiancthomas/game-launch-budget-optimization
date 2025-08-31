@@ -211,11 +211,20 @@ data/                # Generated datasets and results
 experiments/         # Analysis outputs
 ```
 
-## Future Enhancements
+## Limitations and Next Steps  
+
+This version is a first pass meant to set up the framework. A few areas I’d like to expand in future versions:  
+
+- **Data realism** – The current dataset uses simplified or synthetic values. Pulling in historical campaign data (with proper anonymization) would make the results more meaningful.  
+- **Modeling depth** – The optimization logic makes some straightforward assumptions. Future iterations could test alternative approaches like nonlinear constraints, Bayesian methods, or ML-based demand forecasting.  
+- **Granularity** – Right now the scope is at the channel level. Adding sub-channel or creative-level optimization would make the outputs more actionable.  
+- **Usability** – Everything runs through a the console at this stage. A lightweight dashboard, notebooke, or simple interface would make it easier for others to tweak inputs and run scenarios.  
+
+The goal for v1 was to build something clear and working, not final. These notes are here to mark where the project can grow.  
 
 **V1.1 Next Steps:**
 
-- **Visualizations**: Graphical representations showing allocation breakdowns and potentially sensitivity analysis
+- **Visualizations**: Graphical representations showing allocation breakdowns and potentially sensitivity analysis (likely via notebook usage)
 - **Results Analysis**: Enhanced CLI output with channel efficiency rankings and ROI insights
 - **Real Data Integration**: Leverage realistic data for more useful analysis
 

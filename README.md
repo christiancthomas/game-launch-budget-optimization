@@ -11,15 +11,20 @@ overall conversions and revenue. Without a structured approach, budget
 allocation decisions may rely on intuition or historical habits, which can lead
 to suboptimal results (unrealized ROI, lost revenue, poor ad spend, etc.).
 
-This project uses quadratic programming to determine the optimal
+I used quadratic programming methods here to determine the optimal
 allocation of marketing budgets across channels. By modeling diminishing
-returns, budget constraints, and channel-specific caps, it aims to maximize
-conversions (or revenue) while providing transparency into trade-offs and
-sensitivity to changes.
+returns, budget constraints, and channel-specific caps, you can theoretically
+maximize conversions (or revenue).
+
+This project is still in a prototype stage. If you're using this for real budget
+decisions, you should definitely validate the response curves against your
+historical data first. The default parameters are based on what I've seen in gaming but YMMV.
+
+🎮
 
 ## Business Context
 
-In a competitive launch environment, every marketing dollar counts. Game
+In the gaming industry, budgets are limited. So every dollar counts. Game
 publishers and marketing teams need to:
 
 1. Justify spend allocation with data-driven reasoning
@@ -32,55 +37,15 @@ By providing a reproducible, optimization-based framework, this project gives
 launch teams a defensible and flexible tool for maximizing impact while staying
 within operational and financial limits.
 
-### Business Impact
-
-For marketing teams, this provides:
+**For marketing teams, this tool provides:**
 
 1. **Data-driven budget allocation** replacing gut instinct with mathematical optimization
-2. **Sensitivity analysis** showing trade-offs between channels
+2. (TODO) **Sensitivity analysis** showing trade-offs between channels
 3. **Scalable framework** adaptable to different budget levels and channel mixes
 
-## Technical Approach
-
-The solution combines several key concepts:
-
-- **Mathematical Optimization**: Quadratic programming (QP) to handle non-linear diminishing returns
-- **Synthetic Data Modeling**: Realistic channel performance simulation based on industry metrics
-- **Statistical Curve Fitting**: Quadratic functions (`conversions = a·spend - b·spend²`) to model channel saturation effects
-- **Constraint Programming**: Budget limits, minimum spend requirements, and channel capacity bounds
-
-### ✅ Core Data Infrastructure
-
-- **Configuration system** (`src/config/`) with YAML-based parameter management
-- **Synthetic data generation** (`src/data/synth.py`) with realistic channel characteristics
-- **Mathematical curve modeling** (`src/features/curves.py`) for diminishing returns
-- **Quadratic Programming Solver** (`src/opt/solve.py`) using SciPy SLSQP optimization
-- **Complete CLI interface** (`src/cli.py`) with `synth` and `optimize` commands
-- **Comprehensive test suite** (30 tests) including end-to-end integration validation
-
-## Current Status: V1 Complete! 🎉
-
-This repository has achieved its **V1 milestone goals**:
-
-✅ **End-to-end optimization pipeline** from synthetic data to optimal budget allocation
-✅ **Production-ready CLI tools** for data generation and optimization
-✅ **Comprehensive test coverage** full integration test suite
-✅ **Mathematical validation** of budget conservation, constraint satisfaction, and business logic
-✅ **Quality controls** with pre-commit hooks, linting, and enforcement of a consistent style
-
-Future updates will focus on adding more advanced features.
-
-## Getting Started
-
-This project uses a Makefile to make getting started and development as easy as
-possible.
-
-### Prerequisites
-
-- Python 3.13+ installed on your system
-- Git (for cloning the repository)
-
 ### Quick Start
+
+I used a Makefile as a wrapper for commonly bundled commands because this is simpler for me (and users, I assume). I've provided instructions based on that usage below. You can always run the python commands directly if preferred.
 
 1. **Clone the repository:**
 
@@ -95,36 +60,74 @@ possible.
    make setup
    ```
 
-   This single command will:
+   This will:
    - Create a virtual environment (`venv`)
    - Install all dependencies from `requirements.txt`
    - Install development tools (pytest, pre-commit, black, ruff)
    - Set up pre-commit hooks for code quality
    - Create the project directory structure
 
-3. **Activate the virtual environment (for development work only):**
-
-   ```bash
-   source venv/bin/activate
-   ```
-
-   This step is needed for development work (running scripts, interactive
-   Python, installing additional packages). The Makefile commands (`make test`,
-   `make lint`, etc.) will work without activation since they are designed to
-   use the virtual environment automatically.
-
-4. **Run the complete optimization pipeline:**
+3. **Run the complete optimization pipeline:**
 
    ```bash
    # Generate synthetic data and run optimization
    make baseline
    ```
 
-5. **Run tests to validate everything works:**
+   **Example output:**
+
+   ```text
+   🚀 Running budget optimization...
+   💰 Total budget: $100000.0
+   📊 Optimizing 5 channels...
+
+   ✅ OPTIMIZATION COMPLETE!
+   OPTIMAL ALLOCATION:
+   Channel         | Spend    | Conversions  | CPA
+   ------------------------------------------------------------
+   google          | $   6537 |     157 conv | $   42 CPA
+   meta            | $  35000 |    1408 conv | $   25 CPA
+   tiktok          | $  20005 |     545 conv | $   37 CPA
+   reddit          | $  25000 |    1091 conv | $   23 CPA
+   x               | $  13458 |     600 conv | $   22 CPA
+   ------------------------------------------------------------
+   TOTAL           | $ 100000 |    3801 conv | $   26 CPA
+
+   Budget utilization: 100.0%
+   ```
+
+4. **Run tests to validate everything works:**
 
    ```bash
    make test
    ```
+
+5. **(for development work only) Activate the virtual environment:**
+
+   ```bash
+   source venv/bin/activate
+   ```
+
+   This step is only needed for development work (running scripts directly, installing additional packages, etc.). The Makefile commands (`make test`,
+   `make lint`, etc.) will work without activation since they are designed to
+   use the virtual environment automatically.
+
+### Prerequisites
+
+- Python 3.13+ installed on your system
+- Git (for cloning the repository)
+
+## Current Status: V1 Complete! 🎉
+
+Officially hit all the **V1 milestone goals**!
+
+- **End-to-end optimization pipeline** from synthetic data to optimal budget allocation
+- **Production-ready CLI tools** for data generation and optimization
+- **Comprehensive test coverage** full integration test suite
+- **Mathematical validation** of budget conservation, constraint satisfaction, and business logic
+- **Quality controls** with pre-commit hooks, linting, and enforcement of a consistent style
+
+Future updates will focus on adding more advanced features to handle more complex scenarios.
 
 ### CLI Commands Reference
 
@@ -142,49 +145,36 @@ make synth      # Generate data only
 make baseline   # Generate data + run optimization
 ```
 
-**What You'll See:**
-
-```text
-🚀 Running budget optimization...
-💰 Total budget: $100000.0
-📊 Optimizing 5 channels...
-
-✅ OPTIMIZATION COMPLETE!
-OPTIMAL ALLOCATION:
-Channel         | Spend    | Conversions  | CPA
-------------------------------------------------------------
-google          | $   6537 |     157 conv | $   42 CPA
-meta            | $  35000 |    1408 conv | $   25 CPA
-tiktok          | $  20005 |     545 conv | $   37 CPA
-reddit          | $  25000 |    1091 conv | $   23 CPA
-x               | $  13458 |     600 conv | $   22 CPA
-------------------------------------------------------------
-TOTAL           | $ 100000 |    3801 conv | $   26 CPA
-
-Budget utilization: 100.0%
-```
-
 ### Other Useful Commands
 
-- `make help` - See all available commands
-- `make test` - Run test suite
-- `make synth` - Generate synthetic channel data
-- `make baseline` - Run complete synth → optimize pipeline
-- `make lint` - Check code quality using `ruff` and `black`
-- `make format` - Auto-format code
-- `make clean` - Clean up virtual environment and cache files
+- `make help` - see all available commands
+- `make test` - runs test suite
+- `make synth` - generates synthetic channel data
+- `make baseline` - generates sample data and runs optimization
+- `make lint` - checks code quality using `ruff` and `black` (for developers)
+- `make format` - auto-formats code (for developers)
+- `make clean` - cleans up virtual environment and cache files
 
-## Mathematical Framework
+## Methodology
+
+The solution combines a few key mathematical concepts:
+
+- **Mathematical Optimization**: Quadratic programming (QP) to handle non-linear diminishing returns
+- **Synthetic Data Modeling**: Realistic channel performance simulation based on industry metrics
+- **Statistical Curve Fitting**: Quadratic functions (`conversions = a*spend - b*spend²`) to model channel saturation effects
+- **Constraint Handling**: Budget limits, minimum spend requirements, and channel capacity bounds
+
+### Mathematical Framework
 
 The optimization problem can be modeled as:
 
 ```text
-Maximize: Σᵢ (aᵢ·xᵢ - bᵢ·xᵢ²)  [Total conversions across all channels]
+Maximize: Σᵢ (aᵢ*xᵢ - bᵢ*xᵢ²)  [Total conversions across all channels]
 
 Subject to:
 - Σᵢ xᵢ = Budget                 [Budget constraint]
 - min_spendᵢ ≤ xᵢ ≤ max_spendᵢ   [Channel capacity bounds]
-- xᵢ ≥ 0                         [Non-negativity]
+- xᵢ ≥ 0                         [Can't spend negative budget]
 ```
 
 Where:
@@ -193,46 +183,45 @@ Where:
 - `aᵢ` = initial efficiency (conversions per dollar)
 - `bᵢ` = diminishing returns coefficient
 
-**This quadratic formulation captures the economic reality that additional spend yields progressively fewer returns due to audience saturation and increased competition.**
+This quadratic formulation captures the economic reality that additional spend yields progressively fewer returns due to audience saturation and increased competition. Linear programming methods strictly won't work here because it doesn't capture the diminishing returns effect at higher spends.
 
 ## Project Structure
 
-```text
-src/
+```tree
+src/                 # Main code
 ├── config/          # YAML configuration and loading
-├── data/            # Synthetic data generation
+├── data/            # Sample data & outputs
 ├── features/        # Mathematical curve modeling
 ├── opt/             # Quadratic programming solver
-├── viz/             # Visualization (future)
-└── cli.py           # Command-line interface
+├── viz/             # Generated visualizations
+└── cli.py           # Command line interface
 
-tests/               # comprehensive testing to ensure stability
+tests/
 data/                # Generated datasets and results
-experiments/         # Analysis outputs
+experiments/         # jupyter notebooks
 ```
 
-## Limitations and Next Steps  
+## Limitations and Next Steps
 
-This version is a first pass meant to set up the framework. There are some notable simplifications / limitations I relied on and could be areas I’d like to expand on in future versions:  
+This version is a first pass meant to set up the framework. There are some notable simplifications that I relied on and are areas I’d like to expand on in future versions:
 
-- **Data realism** – The current dataset uses simplified or synthetic values. That makes it easy to test and share, but limits how realistic the outputs are compared to actual campaign performance. A future version could pull in historical spend/outcome data (with anonymization) to validate the model.  
-- **Solver choice** – I used SciPy’s SLSQP solver because it handles both bounds and constraints directly, which maps well to this version of the problem. It’s quick to run in a small python script and works fine with a nonlinear objective. The tradeoff is that SLSQP is a local solver, so results depend on scaling and starting values. Future work might test alternatives like CVXPy or mixed-integer approaches if the problem expands.
-- **Modeling depth** – The optimization logic makes some straightforward assumptions. Future iterations could test alternative approaches like nonlinear constraints, geo-based consideration, Bayesian methods, or ML-based forecasting.  
-- **Granularity** – Right now the scope is at the channel level. Adding geo-level or sub-channel (Meta-FB / Meta-IG, Google-search / Google-YT, etc.) optimization would make the outputs more actionable.  
-- **Usability** – Everything runs through a the console at this stage. A lightweight dashboard, notebooke, or simple interface would make it easier for others to tweak inputs and run scenarios.  
+- **Data realism** – The current dataset uses synthetic values. That makes it easy to test and develop on, but limits how realistic the outputs are compared to actual campaign performance. I'm working on a future version that will use historical spend/conversion data (with sufficient anonymization/jitter) to validate the model.
+- **Solver choice** – I used SciPy’s SLSQP solver because it's easily accessible and handles both bounds and constraints directly, which maps well to this version of the problem. It’s quick to run in a small python script and works fine with a nonlinear objective. The tradeoff is that SLSQP is a local solver, so results depend on scaling and starting values. Future work might test alternatives like CVXPy or mixed-integer approaches if the problem expands significantly in scale.
+- **Modeling depth** – The optimization logic makes some straightforward assumptions. Future iterations could test alternative approaches like nonlinear constraints, geo-based consideration, Bayesian methods, or ML-based forecasting.
+- **Granularity** – Right now the scope is at the channel level. Adding geo-level or sub-channel (Meta-FB / Meta-IG, Google-search / Google-YT, etc.) optimization would make the outputs more actionable.
+- **Usability** – Everything runs through a the console at this stage. A lightweight dashboard, notebooke, or simple interface would make it easier for others to tweak inputs and run scenarios.
 
-The goal for v1 was to build something clear and working, not final. These notes are here to mark where the project can grow.  
+The goal for v1 was to build something clear and working, not final. These notes are here to mark where the project can grow.
 
-**V1.1 Next Steps:**
+### Next Steps (V1.1?)
 
 - **Visualizations**: Graphical representations showing allocation breakdowns and potentially sensitivity analysis (likely via notebook usage)
-- **Results Analysis**: Enhanced CLI output with channel efficiency rankings and ROI insights
+- **Results Analysis**: Enhanced CLI output with deeper reporting such as efficiency ranking and detailed ROI metrics
 - **Real Data Integration**: Leverage realistic data for more useful analysis
 
-**V2 Advanced Features:**
+### Potential V2 Ideas
 
-- **Advanced Response Curves**: Hill/logistic curves for more sophisticated modeling -- theoretically more realistic
-- **Multi-Objective Optimization**: Optimize for multiple KPIs (conversions, DLC purchases, reactivations, etc.)
-- **Sensitivity Analysis**: Budget sweep analysis and constraint shadow pricing
-- **Seasonality Modeling**: Time-based demand curves and budget allocation over campaign periods
-- **Interactive Scenario Planning**: Interactive features for marketing teams to explore "what-if" scenarios
+- **Advanced Response Curves**: More advanced response curves for more sophisticated modeling should theoretically be more realistic, but need to test this beyond synthetic data
+- **Sensitivity Analysis**: A more robust sensitivity analysis could better inform decision making and support "what-if" analyses
+- **Seasonality Modeling**: How does time of year, week, or day impact the results? Gaming is incredibly seasonal and it's expected that this could impact real-world results
+- **Interactive Scenario Planning**: Interactive features for exploratory analysis

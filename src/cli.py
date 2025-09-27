@@ -9,6 +9,7 @@ from src.config.load import load_config
 from src.data.synth import generate_channel_benchmarks, write_benchmarks_csv
 from src.opt.solve import solve_qp
 from src.features.curves import quad_conversions
+from src.viz.plots import plot_simple_allocation_bar
 
 
 def cmd_synth(args):
@@ -126,6 +127,37 @@ def cmd_optimize(args):
         print(f"📄 Results saved to: {output_path}")
 
 
+def cmd_visualize(args):
+    """Generate visualizations for optimization results."""
+    print("🎨 Generating optimization visualizations...")
+
+    # Check if required files exist
+    benchmarks_path = Path(args.benchmarks)
+    results_path = Path(args.results)
+
+    if not benchmarks_path.exists():
+        raise FileNotFoundError(f"Benchmarks file not found: {benchmarks_path}")
+
+    if not results_path.exists():
+        raise FileNotFoundError(f"Results file not found: {results_path}")
+
+        # Simple allocation chart
+    import pandas as pd
+
+    results_df = pd.read_csv(results_path)
+
+    output_path = None
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / "allocation_chart.png"
+
+    plot_simple_allocation_bar(results_df, save_path=output_path)
+
+    if not args.no_show:
+        print("✅ Chart displayed successfully!")
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Budget optimization tools")
@@ -158,6 +190,31 @@ def main():
         "--output", help="Path to save optimization results CSV"
     )
     optimize_parser.set_defaults(func=cmd_optimize)
+
+    # Visualize command
+    viz_parser = subparsers.add_parser("visualize", help="Generate visualizations")
+    viz_parser.add_argument(
+        "--benchmarks",
+        default="data/raw/channel_benchmarks.csv",
+        help="Path to channel benchmarks CSV",
+    )
+    viz_parser.add_argument(
+        "--results",
+        default="data/processed/optimization_results.csv",
+        help="Path to optimization results CSV",
+    )
+    viz_parser.add_argument(
+        "--output-dir",
+        default="experiments/results/figures",
+        help="Directory to save charts",
+    )
+    viz_parser.add_argument(
+        "--dashboard", action="store_true", help="Generate full dashboard (all charts)"
+    )
+    viz_parser.add_argument(
+        "--no-show", action="store_true", help="Don't display charts, just save them"
+    )
+    viz_parser.set_defaults(func=cmd_visualize)
 
     # Parse and execute
     args = parser.parse_args()

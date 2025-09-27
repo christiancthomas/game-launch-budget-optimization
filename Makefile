@@ -2,7 +2,7 @@
 # A handy build automation tool to make setup, running, and testing easier!
 # Activates venv and defines setup, baseline, test targets
 
-.PHONY: help setup test baseline clean lint format check-venv synth
+.PHONY: help setup test baseline clean lint format check-venv synth viz dashboard
 
 # Default target
 help:
@@ -10,7 +10,9 @@ help:
 	@echo "  setup     - Creates venv, installs dependencies, and sets up pre-commit hooks"
 	@echo "  test      - Runs all tests"
 	@echo "  synth     - Generates synthetic channel benchmark data"
-	@echo "  baseline  - Generates synthetic data and runs optimization (future)"
+	@echo "  baseline  - Generates synthetic data and runs optimization"
+	@echo "  viz       - Generate simple allocation chart"
+	@echo "  dashboard - Generate full visualization dashboard"
 	@echo "  lint      - Runs linting checks"
 	@echo "  format    - Formats code with black and ruff"
 	@echo "  clean     - Removes virtual environment and cache files"
@@ -55,12 +57,18 @@ baseline: check-venv
 	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv
 	@echo "✅ Baseline pipeline complete!"
 	@echo "📄 Results saved to data/processed/optimization_results.csv"
-	@echo "📊 Step 1: Generating synthetic channel data..."
-	venv/bin/python -m src.cli synth
-	@echo "🚀 Step 2: Running budget optimization..."
-	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv
-	@echo "✅ Baseline pipeline complete!"
-	@echo "📄 Results saved to data/processed/optimization_results.csv"
+
+# Viz target: Generate simple chart
+viz: check-venv
+	@echo "Generating allocation visualization..."
+	venv/bin/python -m src.cli visualize
+	@echo "✅ Simple chart generated!"
+
+# Dashboard target: Generate full dashboard
+dashboard: check-venv
+	@echo "Generating full visualization dashboard..."
+	venv/bin/python -m src.cli visualize --dashboard
+	@echo "✅ Full dashboard generated!"
 
 # Linting target
 lint: check-venv

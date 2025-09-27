@@ -9,7 +9,7 @@ from src.config.load import load_config
 from src.data.synth import generate_channel_benchmarks, write_benchmarks_csv
 from src.opt.solve import solve_qp
 from src.features.curves import quad_conversions
-from src.viz.plots import plot_simple_allocation_bar
+from src.viz.plots import create_full_dashboard, plot_simple_allocation_bar
 
 
 def cmd_synth(args):
@@ -129,7 +129,7 @@ def cmd_optimize(args):
 
 def cmd_visualize(args):
     """Generate visualizations for optimization results."""
-    print("🎨 Generating optimization visualizations...")
+    print("Generating optimization visualizations...")
 
     # Check if required files exist
     benchmarks_path = Path(args.benchmarks)
@@ -141,21 +141,30 @@ def cmd_visualize(args):
     if not results_path.exists():
         raise FileNotFoundError(f"Results file not found: {results_path}")
 
-        # Simple allocation chart
-    import pandas as pd
+    # Generate visualizations
+    if args.dashboard:
+        create_full_dashboard(
+            benchmarks_path=str(benchmarks_path),
+            results_path=str(results_path),
+            output_dir=args.output_dir,
+            show_plots=not args.no_show,
+        )
+    else:
+        # Simple allocation chart only
+        import pandas as pd
 
-    results_df = pd.read_csv(results_path)
+        results_df = pd.read_csv(results_path)
 
-    output_path = None
-    if args.output_dir:
-        output_dir = Path(args.output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / "allocation_chart.png"
+        output_path = None
+        if args.output_dir:
+            output_dir = Path(args.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = output_dir / "allocation_chart.png"
 
-    plot_simple_allocation_bar(results_df, save_path=output_path)
+        plot_simple_allocation_bar(results_df, save_path=output_path)
 
-    if not args.no_show:
-        print("✅ Chart displayed successfully!")
+        if not args.no_show:
+            print("✅ Chart displayed successfully!")
 
 
 def main():

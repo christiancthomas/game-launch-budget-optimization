@@ -26,16 +26,16 @@ check-venv:
 
 # Setup target: this creates venv, installs deps, and sets up pre-commit
 setup:
-	@echo "🛠️ Setting up development environment..."
+	@echo "Setting up development environment..."
 	python3 -m venv venv
-	@echo "📦 Installing dependencies..."
+	@echo "Installing dependencies..."
 	venv/bin/pip install --upgrade pip
 	venv/bin/pip install -r requirements.txt
 	venv/bin/pip install pytest pre-commit black ruff
-	@echo "🪝 Installing pre-commit hooks..."
+	@echo "Installing pre-commit hooks..."
 	venv/bin/pre-commit install
 	@echo "✅ Setup complete! Virtual environment ready at venv/"
-	@echo "💡 For developers, activate the virtual environment with:"
+	@echo "For developers, activate the virtual environment with:"
 	@echo "   source venv/bin/activate"
 
 # Test target: Run pytest
@@ -50,46 +50,46 @@ synth: check-venv
 
 # Baseline target: Run synth -> optimize pipeline
 baseline: check-venv
-	@echo "🎯 Running baseline optimization pipeline..."
-	@echo "📊 Step 1: Generating synthetic channel data..."
+	@echo "Running baseline optimization pipeline..."
+	@echo "Step 1: Generating synthetic channel data..."
 	venv/bin/python -m src.cli synth
-	@echo "🚀 Step 2: Running budget optimization..."
+	@echo "Step 2: Running budget optimization..."
 	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv
-	@echo "✅ Baseline pipeline complete!"
-	@echo "📄 Results saved to data/processed/optimization_results.csv"
+	@echo "Baseline pipeline complete"
+	@echo "Results saved to data/processed/optimization_results.csv"
 
 # Viz target: Generate simple chart
 viz: check-venv
 	@echo "Generating allocation visualization..."
 	venv/bin/python -m src.cli visualize
-	@echo "✅ Simple chart generated!"
+	@echo "✅ Simple chart generated"
 
 # Dashboard target: Generate full dashboard
 dashboard: check-venv
 	@echo "Generating full visualization dashboard..."
 	venv/bin/python -m src.cli visualize --dashboard
-	@echo "✅ Full dashboard generated!"
+	@echo "✅ Full dashboard generated"
 
 # Linting target
 lint: check-venv
 	@echo "🔍 Running linting checks..."
 	venv/bin/ruff check src/ tests/
 	venv/bin/black --check src/ tests/
-	@echo "✅ Linting complete!"
+	@echo "Linting complete"
 
 # Format target
 format: check-venv
-	@echo "✨ Formatting code..."
+	@echo "Formatting code..."
 	venv/bin/black src/ tests/
 	venv/bin/ruff check --fix src/ tests/
-	@echo "✅ Code formatted successfully!"
+	@echo "✅ Code formatted successfully"
 
 # Clean target: Remove venv and cache
 clean:
-	@echo "🧹 Cleaning up..."
+	@echo "Cleaning up..."
 	rm -rf venv
 	rm -rf __pycache__
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -name "*.pyc" -delete
-	@echo "✅ Cleanup complete!"
+	@echo "✅ Cleanup complete"

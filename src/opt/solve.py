@@ -90,7 +90,7 @@ def build_objective_function(benchmarks: list[dict]):
 
 
 def build_constraints(benchmarks: list[dict], total_budget: float):
-    """Build constraint functions and bounds for the optimizer."""
+    """Builds constraint functions and bounds for the optimizer."""
 
     # Budget equality constraint: sum(spends) = total_budget
     def budget_constraint(x):

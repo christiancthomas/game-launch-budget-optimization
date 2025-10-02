@@ -25,8 +25,8 @@ def cmd_synth(args):
 
     write_benchmarks_csv(benchmarks, str(output_path))
 
-    print(f"✅ Generated {len(benchmarks)} channel benchmarks")
-    print(f"📄 Saved to: {output_path}")
+    print(f"Generated {len(benchmarks)} channel benchmarks")
+    print(f"Saved to: {output_path}")
 
     # Quick summary
     for bench in benchmarks:
@@ -41,7 +41,7 @@ def cmd_optimize(args):
     """Run budget optimization on channel benchmarks."""
     config = load_config(args.config)
 
-    print("🚀 Running budget optimization...")
+    print("Running budget optimization...")
 
     # Load benchmarks from CSV
     benchmarks_path = Path(args.benchmarks)
@@ -55,13 +55,13 @@ def cmd_optimize(args):
     # Get budget from config or args
     budget = args.budget or config.get("budget", {}).get("total", 1000)
 
-    print(f"💰 Total budget: ${budget}")
-    print(f"📊 Optimizing {len(benchmarks)} channels...")
+    print(f"Total budget: ${budget}")
+    print(f"Optimizing {len(benchmarks)} channels...")
 
     # Run optimization
     allocation = solve_qp(benchmarks, budget)
 
-    print("\n✅ OPTIMIZATION COMPLETE!")
+    print("\n✅ Optimization complete")
     print("=" * 60)
     print("OPTIMAL ALLOCATION:")
     print(f"{'Channel':15} | {'Spend':8} | {'Conversions':12} | {'CPA':8}")
@@ -124,7 +124,7 @@ def cmd_optimize(args):
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         results_df.to_csv(output_path, index=False)
-        print(f"📄 Results saved to: {output_path}")
+        print(f"Results saved to: {output_path}")
 
 
 def cmd_visualize(args):
@@ -162,9 +162,6 @@ def cmd_visualize(args):
             output_path = output_dir / "allocation_chart.png"
 
         plot_simple_allocation_bar(results_df, save_path=output_path)
-
-        if not args.no_show:
-            print("✅ Chart displayed successfully!")
 
 
 def main():
@@ -235,7 +232,7 @@ def main():
     try:
         args.func(args)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         sys.exit(1)
 
 

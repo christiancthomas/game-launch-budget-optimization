@@ -69,7 +69,6 @@ def plot_allocation_breakdown(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"📊 Saved allocation breakdown to: {save_path}")
 
     plt.show()
 
@@ -167,7 +166,6 @@ def plot_channel_curves(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"📈 Saved response curves to: {save_path}")
 
     plt.show()
 
@@ -251,7 +249,6 @@ def plot_efficiency_analysis(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"📊 Saved efficiency analysis to: {save_path}")
 
     plt.show()
 
@@ -326,7 +323,6 @@ def plot_marginal_roi_comparison(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"📈 Saved marginal ROI comparison to: {save_path}")
 
     plt.show()
 
@@ -375,14 +371,12 @@ def create_full_dashboard(
         benchmarks_df, results_df, save_path=output_path / "marginal_roi_comparison.png"
     )
 
-    print(f"✅ Dashboard complete! All charts saved to: {output_path}")
-
     # Summary stats for CLI output
     total_budget = results_df["optimal_spend"].sum()
     total_conversions = results_df["predicted_conversions"].sum()
     avg_cpa = total_budget / total_conversions if total_conversions > 0 else 0
 
-    print("\n📊 OPTIMIZATION SUMMARY:")
+    print("\nOPTIMIZATION SUMMARY:")
     print(f"   Total Budget: ${total_budget:,.0f}")
     print(f"   Total Conversions: {total_conversions:,.0f}")
     print(f"   Portfolio CPA: ${avg_cpa:.0f}")
@@ -425,6 +419,5 @@ def plot_simple_allocation_bar(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"📊 Saved simple allocation chart to: {save_path}")
 
     plt.show()

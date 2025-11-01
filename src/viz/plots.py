@@ -5,10 +5,15 @@ plots.py holds the functions for visualizing budget optimization results.
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import seaborn as sns
 from pathlib import Path
 from typing import Optional
 
 from src.features.curves import quad_conversions, quad_grad
+
+# Set seaborn style for all plots
+sns.set_theme(style="whitegrid", palette="deep")
+sns.set_context("notebook", font_scale=1.1)
 
 
 def plot_allocation_breakdown(
@@ -27,7 +32,8 @@ def plot_allocation_breakdown(
     cpas = results_df["cost_per_acquisition"]
 
     # Left: Budget allocation
-    bars1 = ax1.bar(channels, spends, color="steelblue", alpha=0.7)
+    palette = sns.color_palette("deep")
+    bars1 = ax1.bar(channels, spends, color=palette[0])
     ax1.set_title("Budget Allocation by Channel")
     ax1.set_ylabel("Spend ($)")
     ax1.set_xlabel("Channel")
@@ -46,7 +52,7 @@ def plot_allocation_breakdown(
         )
 
     # Right: CPA comparison
-    bars2 = ax2.bar(channels, cpas, color="coral", alpha=0.7)
+    bars2 = ax2.bar(channels, cpas, color=palette[3])
     ax2.set_title("Cost Per Acquisition (CPA)")
     ax2.set_ylabel("CPA ($)")
     ax2.set_xlabel("Channel")
@@ -394,9 +400,8 @@ def plot_simple_allocation_bar(
     """
     plt.figure(figsize=figsize)
 
-    bars = plt.bar(
-        results_df["channel"], results_df["optimal_spend"], color="steelblue", alpha=0.7
-    )
+    palette = sns.color_palette("deep")
+    bars = plt.bar(results_df["channel"], results_df["optimal_spend"], color=palette[0])
 
     plt.title(title, fontsize=14, fontweight="bold")
     plt.xlabel("Channel")
@@ -416,6 +421,122 @@ def plot_simple_allocation_bar(
 
     plt.grid(True, alpha=0.3, axis="y")
     plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+
+    plt.show()
+
+
+def plot_optimization_convergence(
+    history: dict,
+    title: str = "Optimization Convergence",
+    save_path: Optional[str] = None,
+    figsize: tuple = (12, 8),
+):
+    """
+    Visualize the optimization algorithm converging to optimal solution.
+
+    Business logic:
+        Shows how the optimizer explores the solution space and settles
+        on the best allocation. Demonstrates that we're actually finding
+        a mathematically optimal solution, not just guessing.
+
+    Math:
+        Tracks objective function value (total conversions) and constraint
+        satisfaction across iterations. The algorithm should show:
+        - Objective improving (conversions increasing)
+        - Budget constraint tightening toward equality
+        - Spend allocations stabilizing
+    """
+    if not history or "iteration" not in history:
+        print("No optimization history available to plot")
+        return
+
+    iterations = history["iteration"]
+    objectives = history["objective"]
+    budget_errors = history["budget_error"]
+
+    # Create 2x2 subplot grid
+    fig = plt.figure(figsize=figsize)
+    gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
+
+    palette = sns.color_palette("deep")
+
+    # Top left: Objective function (conversions) over iterations
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.plot(
+        iterations,
+        objectives,
+        linewidth=2.5,
+        color=palette[2],
+        marker="o",
+        markersize=4,
+        markevery=max(1, len(iterations) // 20),
+    )
+    ax1.set_xlabel("Iteration")
+    ax1.set_ylabel("Total Conversions")
+    ax1.set_title("Objective Function Progress")
+    ax1.grid(True, alpha=0.3)
+
+    # Add improvement annotation
+    if len(objectives) > 1:
+        improvement = objectives[-1] - objectives[0]
+        ax1.text(
+            0.05,
+            0.95,
+            f"Total gain: {improvement:,.0f} conversions",
+            transform=ax1.transAxes,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="lightgreen", alpha=0.7),
+        )
+
+    # Top right: Budget constraint error
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.plot(
+        iterations,
+        budget_errors,
+        linewidth=2.5,
+        color=palette[3],
+        marker="s",
+        markersize=4,
+        markevery=max(1, len(iterations) // 20),
+    )
+    ax2.set_xlabel("Iteration")
+    ax2.set_ylabel("Budget Constraint Error ($)")
+    ax2.set_title("Constraint Satisfaction")
+    ax2.axhline(y=0, color="gray", linestyle="--", alpha=0.5, label="Perfect balance")
+    ax2.grid(True, alpha=0.3)
+    ax2.legend()
+
+    # Bottom: Channel allocation evolution (multi-line plot)
+    ax3 = fig.add_subplot(gs[1, :])
+
+    # Plot spend trajectory for each channel
+    channel_names = [k for k in history.keys() if k.startswith("spend_")]
+    colors = sns.color_palette("husl", len(channel_names))
+
+    for i, ch_key in enumerate(channel_names):
+        channel_name = ch_key.replace("spend_", "")
+        spend_history = history[ch_key]
+        ax3.plot(
+            iterations,
+            spend_history,
+            linewidth=2,
+            label=channel_name.title(),
+            color=colors[i],
+            marker="o",
+            markersize=3,
+            markevery=max(1, len(iterations) // 15),
+        )
+
+    ax3.set_xlabel("Iteration")
+    ax3.set_ylabel("Channel Spend ($)")
+    ax3.set_title("Budget Allocation Evolution")
+    ax3.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    ax3.grid(True, alpha=0.3)
+
+    plt.suptitle(title, fontsize=16, fontweight="bold")
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")

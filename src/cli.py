@@ -9,7 +9,12 @@ from src.config.load import load_config
 from src.data.synth import generate_channel_benchmarks, write_benchmarks_csv
 from src.opt.solve import solve_qp
 from src.features.curves import quad_conversions
-from src.viz.plots import create_full_dashboard, plot_simple_allocation_bar
+from src.viz.plots import (
+    create_full_dashboard,
+    plot_simple_allocation_bar,
+    plot_optimization_convergence,
+)
+from src.utils.animation import create_convergence_gif
 
 
 def cmd_synth(args):
@@ -25,8 +30,8 @@ def cmd_synth(args):
 
     write_benchmarks_csv(benchmarks, str(output_path))
 
-    print(f"✅ Generated {len(benchmarks)} channel benchmarks")
-    print(f"📄 Saved to: {output_path}")
+    print(f"Generated {len(benchmarks)} channel benchmarks")
+    print(f"Saved to: {output_path}")
 
     # Quick summary
     for bench in benchmarks:
@@ -41,7 +46,7 @@ def cmd_optimize(args):
     """Run budget optimization on channel benchmarks."""
     config = load_config(args.config)
 
-    print("🚀 Running budget optimization...")
+    print("Running budget optimization...")
 
     # Load benchmarks from CSV
     benchmarks_path = Path(args.benchmarks)
@@ -55,13 +60,21 @@ def cmd_optimize(args):
     # Get budget from config or args
     budget = args.budget or config.get("budget", {}).get("total", 1000)
 
-    print(f"💰 Total budget: ${budget}")
-    print(f"📊 Optimizing {len(benchmarks)} channels...")
+    print(f"Total budget: ${budget}")
+    print(f"Optimizing {len(benchmarks)} channels...")
 
-    # Run optimization
-    allocation = solve_qp(benchmarks, budget)
+    # Run optimization (with optional history tracking)
+    track_convergence = getattr(args, "track_convergence", False)
+    result = solve_qp(benchmarks, budget, track_history=track_convergence)
 
-    print("\n✅ OPTIMIZATION COMPLETE!")
+    # Unpack result based on tracking flag
+    if track_convergence:
+        allocation, history = result
+    else:
+        allocation = result
+        history = None
+
+    print("\n✅ Optimization complete")
     print("=" * 60)
     print("OPTIMAL ALLOCATION:")
     print(f"{'Channel':15} | {'Spend':8} | {'Conversions':12} | {'CPA':8}")
@@ -124,7 +137,24 @@ def cmd_optimize(args):
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         results_df.to_csv(output_path, index=False)
-        print(f"📄 Results saved to: {output_path}")
+        print(f"Results saved to: {output_path}")
+
+    # Save convergence history if tracked
+    if track_convergence and history:
+        import json
+
+        history_path = (
+            Path(args.output).parent / "convergence_history.json"
+            if args.output
+            else Path("data/processed/convergence_history.json")
+        )
+        history_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(history_path, "w") as f:
+            json.dump(history, f, indent=2)
+
+        print(f"Convergence history saved to: {history_path}")
+        print(f"   Converged in {len(history['iteration'])} iterations")
 
 
 def cmd_visualize(args):
@@ -163,8 +193,46 @@ def cmd_visualize(args):
 
         plot_simple_allocation_bar(results_df, save_path=output_path)
 
-        if not args.no_show:
-            print("✅ Chart displayed successfully!")
+    # Generate convergence visualization if history provided
+    if args.convergence:
+        import json
+
+        convergence_path = Path(args.convergence)
+        if not convergence_path.exists():
+            print(f"Warning: Convergence history not found at {convergence_path}")
+        else:
+            with open(convergence_path, "r") as f:
+                history = json.load(f)
+
+            # Generate static plot
+            print("\nGenerating convergence visualization...")
+            output_path = None
+            if args.output_dir:
+                output_dir = Path(args.output_dir)
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = output_dir / "optimization_convergence.png"
+
+            plot_optimization_convergence(history, save_path=output_path)
+
+            # Generate animated GIF if requested
+            if args.gif:
+                # Load benchmarks for marginal ROI calculation
+                benchmarks_df = pd.read_csv(benchmarks_path)
+                benchmarks = benchmarks_df.to_dict("records")
+
+                print("\nGenerating convergence animation...")
+                gif_path = (
+                    output_dir / "optimization_convergence.gif"
+                    if args.output_dir
+                    else "optimization_convergence.gif"
+                )
+                create_convergence_gif(
+                    history,
+                    benchmarks,
+                    save_path=str(gif_path),
+                    fps=args.fps,
+                    max_frames=args.max_frames,
+                )
 
 
 def main():
@@ -198,6 +266,11 @@ def main():
     optimize_parser.add_argument(
         "--output", help="Path to save optimization results CSV"
     )
+    optimize_parser.add_argument(
+        "--track-convergence",
+        action="store_true",
+        help="Track optimization convergence for visualization",
+    )
     optimize_parser.set_defaults(func=cmd_optimize)
 
     # Visualize command
@@ -223,6 +296,26 @@ def main():
     viz_parser.add_argument(
         "--no-show", action="store_true", help="Don't display charts, just save them"
     )
+    viz_parser.add_argument(
+        "--convergence", help="Path to convergence history JSON (optional)"
+    )
+    viz_parser.add_argument(
+        "--gif",
+        action="store_true",
+        help="Generate animated GIF of convergence (requires --convergence)",
+    )
+    viz_parser.add_argument(
+        "--fps",
+        type=int,
+        default=5,
+        help="Frames per second for GIF animation (default: 5)",
+    )
+    viz_parser.add_argument(
+        "--max-frames",
+        type=int,
+        default=None,
+        help="Max frames in GIF (subsamples if needed)",
+    )
     viz_parser.set_defaults(func=cmd_visualize)
 
     # Parse and execute
@@ -235,7 +328,7 @@ def main():
     try:
         args.func(args)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         sys.exit(1)
 
 

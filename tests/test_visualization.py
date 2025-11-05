@@ -9,6 +9,7 @@ from src.viz.plots import (
     plot_allocation_breakdown,
     plot_simple_allocation_bar,
     create_full_dashboard,
+    plot_optimization_convergence,
 )
 
 
@@ -178,3 +179,55 @@ def test_dataframe_requirements(sample_results_df):
     # Verify basic data types
     assert sample_results_df["optimal_spend"].dtype in ["float64", "int64"]
     assert sample_results_df["predicted_conversions"].dtype in ["float64", "int64"]
+
+
+@pytest.fixture
+def sample_convergence_history():
+    """Sample convergence history for testing."""
+    return {
+        "iteration": list(range(1, 11)),
+        "objective": [1200 + i * 20 for i in range(10)],  # Increasing conversions
+        "budget_error": [500 - i * 50 for i in range(10)],  # Decreasing error
+        "spend_google": [20000 + i * 500 for i in range(10)],
+        "spend_meta": [25000 + i * 600 for i in range(10)],
+        "spend_tiktok": [15000 + i * 400 for i in range(10)],
+    }
+
+
+def test_convergence_plot_basic(sample_convergence_history):
+    """Test convergence plot runs without errors."""
+    with patch("matplotlib.pyplot.show"):
+        plot_optimization_convergence(sample_convergence_history)
+
+    plt.close("all")
+
+
+def test_convergence_plot_with_save(sample_convergence_history):
+    """Test saving convergence plot."""
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        temp_path = f.name
+
+    try:
+        with patch("matplotlib.pyplot.show"):
+            plot_optimization_convergence(
+                sample_convergence_history, save_path=temp_path
+            )
+
+        # Check file was created
+        assert Path(temp_path).exists()
+        assert Path(temp_path).stat().st_size > 0
+
+    finally:
+        Path(temp_path).unlink(missing_ok=True)
+        plt.close("all")
+
+
+def test_convergence_plot_empty_history():
+    """Test convergence plot handles empty/invalid history."""
+    empty_history = {}
+
+    with patch("matplotlib.pyplot.show"):
+        # Should handle gracefully (prints warning)
+        plot_optimization_convergence(empty_history)
+
+    plt.close("all")

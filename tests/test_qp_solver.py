@@ -149,3 +149,54 @@ def test_edge_cases():
 
     with pytest.raises(ValueError, match="Budget must be > 0"):
         solve_qp(benchmarks, -1000)
+
+
+def test_history_tracking():
+    """Test that history tracking captures convergence data."""
+    benchmarks = create_test_benchmarks()
+    total_budget = 50000
+
+    # Run with history tracking
+    allocation, history = solve_qp(benchmarks, total_budget, track_history=True)
+
+    # Should still get valid allocation
+    assert len(allocation) == len(benchmarks)
+    total_allocated = sum(allocation.values())
+    assert abs(total_allocated - total_budget) < 1e-6
+
+    # History should contain expected keys
+    assert "iteration" in history
+    assert "objective" in history
+    assert "budget_error" in history
+
+    # Should have recorded at least one iteration
+    assert len(history["iteration"]) > 0
+
+    # Each channel should have spend history
+    for ch in benchmarks:
+        spend_key = f"spend_{ch['channel']}"
+        assert spend_key in history
+        assert len(history[spend_key]) == len(history["iteration"])
+
+    # Objective should generally improve (or stay flat at optimum)
+    objectives = history["objective"]
+    assert objectives[-1] >= objectives[0]  # Final should be better than initial
+
+    # Budget error should converge toward zero
+    budget_errors = history["budget_error"]
+    assert (
+        abs(budget_errors[-1]) < abs(budget_errors[0]) or abs(budget_errors[-1]) < 1e-6
+    )
+
+
+def test_history_tracking_disabled():
+    """Test that solver still works without history tracking."""
+    benchmarks = create_test_benchmarks()
+    total_budget = 50000
+
+    # Run without history tracking (default)
+    result = solve_qp(benchmarks, total_budget, track_history=False)
+
+    # Should return just the allocation dict
+    assert isinstance(result, dict)
+    assert len(result) == len(benchmarks)

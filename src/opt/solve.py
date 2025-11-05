@@ -5,7 +5,53 @@ from scipy.optimize import minimize
 from src.features.curves import quad_conversions
 
 
-def solve_qp(benchmarks: list[dict], total_budget: float) -> dict:
+class OptimizationHistoryTracker:
+    """Captures solver progress for convergence visualization."""
+
+    def __init__(self, benchmarks: list[dict], total_budget: float):
+        self.benchmarks = benchmarks
+        self.total_budget = total_budget
+        self.channel_names = [ch["channel"] for ch in benchmarks]
+
+        # Storage for iteration history
+        self.iterations = []
+        self.objectives = []
+        self.budget_errors = []
+        self.spend_history = {f"spend_{ch}": [] for ch in self.channel_names}
+
+        self.iteration_count = 0
+
+    def __call__(self, xk):
+        """Called by scipy after each iteration with current solution."""
+        self.iteration_count += 1
+        self.iterations.append(self.iteration_count)
+
+        # Calculate objective (total conversions)
+        total_conversions = sum(
+            quad_conversions(spend, ch["curve_a"], ch["curve_b"])
+            for spend, ch in zip(xk, self.benchmarks)
+        )
+        self.objectives.append(total_conversions)
+
+        # Calculate budget constraint error
+        budget_error = self.total_budget - np.sum(xk)
+        self.budget_errors.append(budget_error)
+
+        # Store per-channel spends
+        for ch_name, spend in zip(self.channel_names, xk):
+            self.spend_history[f"spend_{ch_name}"].append(spend)
+
+    def get_history(self) -> dict:
+        """Return collected history as dict for visualization."""
+        return {
+            "iteration": self.iterations,
+            "objective": self.objectives,
+            "budget_error": self.budget_errors,
+            **self.spend_history,
+        }
+
+
+def solve_qp(benchmarks: list[dict], total_budget: float, track_history: bool = False):
     """
     Allocate budget across channels to maximize conversions.
 
@@ -21,6 +67,8 @@ def solve_qp(benchmarks: list[dict], total_budget: float) -> dict:
         where aᵢ, bᵢ are curve parameters for channel i.
 
     Uses SLSQP (Sequential Least Squares Programming) for efficiency.
+
+    Set track_history=True to get iteration data back for convergence viz.
     """
     if not benchmarks:
         raise ValueError("Need at least one channel to optimize")
@@ -43,6 +91,11 @@ def solve_qp(benchmarks: list[dict], total_budget: float) -> dict:
     total_max = sum(ch["max_spend"] for ch in benchmarks)
     x0 = np.array([total_budget * ch["max_spend"] / total_max for ch in benchmarks])
 
+    # Set up history tracking if requested
+    tracker = (
+        OptimizationHistoryTracker(benchmarks, total_budget) if track_history else None
+    )
+
     # Solve the QP problem
     result = minimize(
         objective_fn,
@@ -50,6 +103,7 @@ def solve_qp(benchmarks: list[dict], total_budget: float) -> dict:
         method="SLSQP",
         bounds=bounds,
         constraints=constraints,
+        callback=tracker,
         options={"ftol": 1e-9, "disp": False},
     )
 
@@ -64,6 +118,9 @@ def solve_qp(benchmarks: list[dict], total_budget: float) -> dict:
     # Validate solution
     if not validate_solution(allocation, benchmarks, total_budget):
         raise RuntimeError("Solution doesn't meet constraints")
+
+    if track_history:
+        return allocation, tracker.get_history()
 
     return allocation
 
@@ -90,7 +147,7 @@ def build_objective_function(benchmarks: list[dict]):
 
 
 def build_constraints(benchmarks: list[dict], total_budget: float):
-    """Build constraint functions and bounds for the optimizer."""
+    """Builds constraint functions and bounds for the optimizer."""
 
     # Budget equality constraint: sum(spends) = total_budget
     def budget_constraint(x):

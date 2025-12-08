@@ -11,13 +11,14 @@ from io import BytesIO  # noqa: E402
 import imageio.v2 as imageio  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from src.features.curves import quad_grad  # noqa: E402
+from src.features.curves import quad_grad, quad_conversions  # noqa: E402
 from src.viz.style import (  # noqa: E402
     apply_style,
     COLORS,
     get_channel_color,
     get_bbox,
     format_channel_name,
+    format_currency,
 )
 
 
@@ -235,6 +236,275 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
 
     # Force consistent dimensions by resizing to standard size
     target_size = (1200, 800)
+    pil_img = pil_img.resize(target_size, Image.Resampling.LANCZOS)
+
+    img = np.array(pil_img.convert("RGB"))
+
+    buf.close()
+    plt.close(fig)
+
+    return img
+
+
+def create_budget_race_gif(
+    history: dict,
+    benchmarks: list[dict],
+    save_path: str = "budget_race.gif",
+    fps: int = 10,
+    max_frames: int = 20,
+    interpolate_frames: int = 2,
+):
+    """
+    Animated bar chart race showing budget reallocation. Shows
+    the optimization journey as a bar chart race - bars grow/shrink
+    and reorder as the solver finds the optimal allocation!
+
+    - history: Optimization history dict with spend_* keys
+    - benchmarks: Channel benchmark data for conversions calculation
+    - save_path: Output GIF path
+    - fps: Frames per second
+    - max_frames: Max keyframes to use (will interpolate between)
+    - interpolate_frames: Number of interpolated frames between keyframes
+    """
+    if not history or "iteration" not in history:
+        print("No history data - skipping budget race GIF generation")
+        return
+
+    n_iterations = len(history["iteration"])
+    keyframe_indices = _get_frame_indices(n_iterations, max_frames)
+
+    # Build interpolated frame data
+    all_frame_data = _interpolate_budget_race_frames(
+        history, benchmarks, keyframe_indices, interpolate_frames
+    )
+
+    print(f"Generating {len(all_frame_data)} frames for budget race GIF...")
+
+    frames = []
+    for frame_data in all_frame_data:
+        frame = _render_budget_race_frame(frame_data, benchmarks)
+        frames.append(frame)
+
+    # Pause at end so viewer can see final converged state
+    duration = 1000 / fps
+    durations = [duration] * len(frames)
+    durations[-1] = 2500  # 2.5s pause at end
+
+    imageio.mimsave(save_path, frames, duration=durations, loop=0)
+
+    total_duration = (len(frames) - 1) / fps + 2.5
+    print(f"Budget race GIF saved to: {save_path}")
+    print(
+        f"   {len(frames)} frames @ {fps} fps + 2.5s pause = "
+        f"{total_duration:.1f}s animation"
+    )
+
+
+def _interpolate_budget_race_frames(
+    history: dict,
+    benchmarks: list[dict],
+    keyframe_indices: list[int],
+    interpolate_frames: int,
+):
+    """Generate interpolated frame data for smooth budget race animation."""
+    channel_names = [b["channel"] for b in benchmarks]
+    all_frames = []
+
+    for i, idx in enumerate(keyframe_indices):
+        # Get current keyframe data
+        current_spends = {ch: history[f"spend_{ch}"][idx] for ch in channel_names}
+        current_objective = history["objective"][idx]
+        current_iteration = history["iteration"][idx]
+
+        # Calculate conversions for this state
+        current_conversions = sum(
+            quad_conversions(current_spends[b["channel"]], b["curve_a"], b["curve_b"])
+            for b in benchmarks
+        )
+
+        if i < len(keyframe_indices) - 1:
+            # Interpolate to next keyframe
+            next_idx = keyframe_indices[i + 1]
+            next_spends = {ch: history[f"spend_{ch}"][next_idx] for ch in channel_names}
+            next_objective = history["objective"][next_idx]
+            next_iteration = history["iteration"][next_idx]
+
+            for interp in range(interpolate_frames + 1):
+                t = interp / (interpolate_frames + 1)
+
+                # Linear interpolation
+                interp_spends = {
+                    ch: current_spends[ch] + t * (next_spends[ch] - current_spends[ch])
+                    for ch in channel_names
+                }
+                (current_objective + t * (next_objective - current_objective))
+                interp_iteration = int(
+                    current_iteration + t * (next_iteration - current_iteration)
+                )
+
+                # Recalculate conversions for interpolated state
+                interp_conversions = sum(
+                    quad_conversions(
+                        interp_spends[b["channel"]], b["curve_a"], b["curve_b"]
+                    )
+                    for b in benchmarks
+                )
+
+                all_frames.append(
+                    {
+                        "spends": interp_spends,
+                        "conversions": interp_conversions,
+                        "iteration": interp_iteration,
+                        "total_iterations": history["iteration"][-1],
+                    }
+                )
+        else:
+            # Last keyframe - no interpolation needed
+            all_frames.append(
+                {
+                    "spends": current_spends,
+                    "conversions": current_conversions,
+                    "iteration": current_iteration,
+                    "total_iterations": history["iteration"][-1],
+                }
+            )
+
+    return all_frames
+
+
+def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
+    """Render a single budget race animation frame (horizontal bar chart race)"""
+    apply_style()
+
+    spends = frame_data["spends"]
+    conversions = frame_data["conversions"]
+    iteration = frame_data["iteration"]
+    total_iterations = frame_data["total_iterations"]
+
+    # Sort channels by spend (descending) for bar chart race effect
+    sorted_channels = sorted(spends.keys(), key=lambda ch: spends[ch], reverse=True)
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=100)
+
+    # Fixed x-axis range for consistent animation
+    max_spend = 110000  # Slightly above max possible spend
+
+    # Grid behind bars (fix grid line visibility issue)
+    ax.set_axisbelow(True)
+    ax.grid(axis="x", alpha=0.4, zorder=0)
+
+    # Draw horizontal bars
+    range(len(sorted_channels))
+    bar_height = 0.7
+
+    for i, channel in enumerate(sorted_channels):
+        spend = spends[channel]
+        color = get_channel_color(channel)
+
+        # Draw bar with zorder to render above grid
+        ax.barh(
+            i,
+            spend,
+            height=bar_height,
+            color=color,
+            edgecolor="white",
+            linewidth=1,
+            zorder=3,
+        )
+
+        # Channel label on left (inside bar if wide enough, outside if not)
+        label = format_channel_name(channel)
+        if spend > max_spend * 0.15:
+            ax.text(
+                spend - max_spend * 0.02,
+                i,
+                label,
+                va="center",
+                ha="right",
+                fontsize=12,
+                fontweight="bold",
+                color="white",
+            )
+        else:
+            ax.text(
+                spend + max_spend * 0.01,
+                i,
+                label,
+                va="center",
+                ha="left",
+                fontsize=12,
+                fontweight="bold",
+                color=color,
+            )
+
+        # Spend value at end of bar
+        ax.text(
+            (
+                spend + max_spend * 0.01
+                if spend > max_spend * 0.15
+                else spend + max_spend * 0.12
+            ),
+            i,
+            format_currency(spend),
+            va="center",
+            ha="left",
+            fontsize=11,
+            color=COLORS["text_secondary"],
+        )
+
+    # Style the chart
+    ax.set_xlim(0, max_spend)
+    ax.set_ylim(-0.5, len(sorted_channels) - 0.5)
+    ax.invert_yaxis()  # Largest at top
+    ax.set_yticks([])
+    ax.set_xlabel("Budget Allocation", fontsize=12)
+
+    # Format x-axis with currency
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: format_currency(x)))
+
+    # Add iteration counter and conversions
+    ax.text(
+        0.98,
+        0.02,
+        f"Iteration {iteration}/{total_iterations}",
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=10,
+        color=COLORS["text_muted"],
+    )
+
+    ax.text(
+        0.98,
+        0.98,
+        f"{conversions:,.0f} conversions",
+        transform=ax.transAxes,
+        ha="right",
+        va="top",
+        fontsize=14,
+        fontweight="bold",
+        color=COLORS["primary"],
+        bbox=get_bbox("success"),
+    )
+
+    # Title
+    ax.set_title(
+        "Budget Optimization in Action",
+        fontsize=16,
+        fontweight="semibold",
+        pad=15,
+    )
+
+    plt.tight_layout()
+
+    # Render to image with consistent dimensions
+    buf = BytesIO()
+    plt.savefig(buf, format="png", dpi=100, facecolor="white", bbox_inches="tight")
+    buf.seek(0)
+
+    pil_img = Image.open(buf)
+    target_size = (1000, 600)
     pil_img = pil_img.resize(target_size, Image.Resampling.LANCZOS)
 
     img = np.array(pil_img.convert("RGB"))

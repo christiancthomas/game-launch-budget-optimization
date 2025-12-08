@@ -181,8 +181,6 @@ def cmd_visualize(args):
         )
     else:
         # Simple allocation chart only
-        import pandas as pd
-
         results_df = pd.read_csv(results_path)
 
         output_path = None

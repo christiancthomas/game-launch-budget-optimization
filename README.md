@@ -18,9 +18,10 @@ maximize conversions (or revenue).
 
 This project is still in a prototype stage. If you're using this for real budget
 decisions, you should definitely validate the response curves against your
-historical data first. The default parameters are based on what I've seen in gaming but YMMV.
+historical data first. The default parameters are based on what I've seen in gaming but YMMV. 🎮
 
-🎮
+![budget_race](https://github.com/user-attachments/assets/145ab8d3-a2b1-4976-b81b-e60511e53f33)
+_Game Launch Budget Optimization in action_
 
 ## Business Context
 

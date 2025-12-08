@@ -223,12 +223,20 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
         fontweight="semibold",
     )
 
+    # Use tight_layout with fixed padding for consistent frame dimensions
+    plt.tight_layout(rect=[0, 0, 0.95, 0.95])
+
     # Use PIL to ensure consistent frame dimensions across iterations
     buf = BytesIO()
-    plt.savefig(buf, format="png", dpi=100, facecolor="white")
+    plt.savefig(buf, format="png", dpi=100, facecolor="white", bbox_inches=None)
     buf.seek(0)
 
     pil_img = Image.open(buf)
+
+    # Force consistent dimensions by resizing to standard size
+    target_size = (1200, 800)
+    pil_img = pil_img.resize(target_size, Image.Resampling.LANCZOS)
+
     img = np.array(pil_img.convert("RGB"))
 
     buf.close()

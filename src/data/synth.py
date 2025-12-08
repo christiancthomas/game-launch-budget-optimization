@@ -8,36 +8,40 @@ import csv
 import random
 
 # Channel profiles with realistic characteristics for synthetic data generation
+# These profiles are tuned to create an interesting optimization problem where:
+# - Channels have similar overall efficiency (so none is obviously dominant)
+# - Saturation rates differ (creating trade-offs as spend increases)
+# - The optimizer must carefully balance allocations rather than just max/min
 CHANNEL_PROFILES = {
     "google": {
-        "cpc_multiplier": 1.0,  # baseline
-        "ctr_multiplier": 2.0,  # very high engagement
-        "cvr_multiplier": 2.0,  # strong conversion
-        "saturation_rate": 0.2,  # moderate saturation
+        "cpc_multiplier": 1.02,  # slightly higher pricing
+        "ctr_multiplier": 1.00,  # baseline engagement
+        "cvr_multiplier": 1.03,  # good conversion (intent)
+        "saturation_rate": 0.18,  # slow saturation (massive scale)
     },
     "meta": {
-        "cpc_multiplier": 1.3,  # decent click cost
-        "ctr_multiplier": 1.0,  # good engagement
-        "cvr_multiplier": 1.2,  # good conversion
-        "saturation_rate": 0.1,  # slower saturation
+        "cpc_multiplier": 1.00,  # baseline pricing
+        "ctr_multiplier": 1.01,  # baseline engagement
+        "cvr_multiplier": 1.00,  # baseline conversion
+        "saturation_rate": 0.22,  # moderate saturation
     },
     "tiktok": {
-        "cpc_multiplier": 0.5,  # cheap clicks
-        "ctr_multiplier": 1.4,  # high engagement
-        "cvr_multiplier": 1.5,  # decent conversion
-        "saturation_rate": 0.15,  # slower saturation
+        "cpc_multiplier": 0.98,  # slightly cheaper
+        "ctr_multiplier": 1.02,  # good engagement
+        "cvr_multiplier": 0.99,  # slightly lower conversion
+        "saturation_rate": 0.20,  # moderate saturation
     },
     "reddit": {
-        "cpc_multiplier": 0.8,  # cheap clicks
-        "ctr_multiplier": 1.0,  # moderate engagement
-        "cvr_multiplier": 1.2,  # good conversions
-        "saturation_rate": 0.25,  # moderate saturation
+        "cpc_multiplier": 1.01,  # baseline pricing
+        "ctr_multiplier": 0.98,  # moderate engagement
+        "cvr_multiplier": 1.02,  # good conversion
+        "saturation_rate": 0.24,  # faster saturation (niche)
     },
     "x": {
-        "cpc_multiplier": 0.7,  # moderately cheap clicks
-        "ctr_multiplier": 1.0,  # moderate engagement
-        "cvr_multiplier": 1.0,  # moderate conversion
-        "saturation_rate": 0.35,  # high saturation
+        "cpc_multiplier": 0.99,  # competitive pricing
+        "ctr_multiplier": 0.99,  # average engagement
+        "cvr_multiplier": 1.01,  # average conversion
+        "saturation_rate": 0.23,  # moderate saturation
     },
 }
 
@@ -66,11 +70,17 @@ def channel_adjustments(base_metrics: dict, channel_name: str):
     }
 
 
-def sample_channel_metrics_for_channel(channel_name: str, config: dict):
-    """Sample metrics with channel personality."""
+def sample_channel_metrics_for_channel(
+    channel_name: str, config: dict, shared_base: dict = None
+):
+    """Sample metrics with channel personality
 
-    # Start with random base metrics
-    base = sample_base_metrics(config)
+    If shared_base is provided, uses those metrics as the base for all channels.
+    This ensures channels are differentiated only by their profile multipliers,
+    creating a more competitive optimization problem.
+    """
+    # Use shared base if provided, otherwise sample fresh
+    base = shared_base if shared_base else sample_base_metrics(config)
 
     # Apply this channel's personality
     return channel_adjustments(base, channel_name)
@@ -125,9 +135,14 @@ def generate_channel_benchmarks(config: dict) -> list[dict]:
     """
     random.seed(config["synth_data"]["random_seed"])
 
+    # Sample shared base metrics once - all channels start from same baseline
+    # This ensures differentiation comes only from profile multipliers,
+    # creating a more competitive/balanced optimization problem
+    shared_base = sample_base_metrics(config)
+
     benchmarks = []
     for ch in config["channels"]:
-        metrics = sample_channel_metrics_for_channel(ch["name"], config)
+        metrics = sample_channel_metrics_for_channel(ch["name"], config, shared_base)
 
         # Get channel-specific saturation rate from profile
         profile = CHANNEL_PROFILES.get(ch["name"], {})

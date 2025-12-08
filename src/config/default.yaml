@@ -3,7 +3,7 @@
 
 # Overall budget and time horizon
 budget:
-  total: 100000.0  # Total marketing budget ($)
+  total: 200000.0  # Total marketing budget ($)
   currency: "USD"
 
 horizon_days: 30  # Campaign duration
@@ -11,28 +11,28 @@ horizon_days: 30  # Campaign duration
 # Marketing channels with their constraints
 channels:
   - name: "google"
-    min_spend: 5000.0     # Minimum spend required ($)
-    max_spend: 40000.0    # Maximum spend allowed ($)
+    min_spend: 2000.0     # Minimum spend required ($)
+    max_spend: 100000.0   # Maximum spend allowed ($)
 
   - name: "meta"
-    min_spend: 3000.0
-    max_spend: 35000.0
+    min_spend: 2000.0
+    max_spend: 100000.0
 
   - name: "tiktok"
-    min_spend: 8000.0
-    max_spend: 50000.0
+    min_spend: 2000.0
+    max_spend: 100000.0
 
   - name: "reddit"
     min_spend: 2000.0
-    max_spend: 25000.0
+    max_spend: 80000.0
 
   - name: "x" # formerly Twitter
-    min_spend: 1000.0
-    max_spend: 15000.0
+    min_spend: 2000.0
+    max_spend: 80000.0
 
 # Synthetic data generation parameters
 synth_data:
-  random_seed: 42
+  random_seed: 2024
 
   # Realistic channel performance parameter ranges for our synthetic data
   cpc_range: [0.10, 0.50]     # Cost per click ($)

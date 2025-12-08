@@ -87,9 +87,24 @@ def solve_qp(benchmarks: list[dict], total_budget: float, track_history: bool = 
     objective_fn = build_objective_function(benchmarks)
     constraints, bounds = build_constraints(benchmarks, total_budget)
 
-    # Initial guess: distribute budget proportionally to max_spend
-    total_max = sum(ch["max_spend"] for ch in benchmarks)
-    x0 = np.array([total_budget * ch["max_spend"] / total_max for ch in benchmarks])
+    # Initial guess: skewed allocation to show optimization journey
+    # Start by putting most budget in first channel, minimum in others for contrast
+    n_channels = len(benchmarks)
+    x0 = np.array([ch["min_spend"] for ch in benchmarks])
+
+    # Put remaining budget in first channel (up to its max)
+    remaining = total_budget - np.sum(x0)
+    first_max = benchmarks[0]["max_spend"]
+    x0[0] = min(x0[0] + remaining, first_max)
+
+    # If first channel can't absorb all remaining, distribute to others
+    remaining = total_budget - np.sum(x0)
+    for i in range(1, n_channels):
+        if remaining <= 0:
+            break
+        add = min(remaining, benchmarks[i]["max_spend"] - x0[i])
+        x0[i] += add
+        remaining -= add
 
     # Set up history tracking if requested
     tracker = (
@@ -104,7 +119,7 @@ def solve_qp(benchmarks: list[dict], total_budget: float, track_history: bool = 
         bounds=bounds,
         constraints=constraints,
         callback=tracker,
-        options={"ftol": 1e-9, "disp": False},
+        options={"ftol": 1e-9, "maxiter": 500, "disp": False},
     )
 
     if not result.success:

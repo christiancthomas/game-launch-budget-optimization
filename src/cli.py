@@ -14,7 +14,7 @@ from src.viz.plots import (
     plot_simple_allocation_bar,
     plot_optimization_convergence,
 )
-from src.utils.animation import create_convergence_gif
+from src.utils.animation import create_convergence_gif, create_budget_race_gif
 
 
 def cmd_synth(args):
@@ -181,8 +181,6 @@ def cmd_visualize(args):
         )
     else:
         # Simple allocation chart only
-        import pandas as pd
-
         results_df = pd.read_csv(results_path)
 
         output_path = None
@@ -214,12 +212,12 @@ def cmd_visualize(args):
 
             plot_optimization_convergence(history, save_path=output_path)
 
+            # Load benchmarks for animations
+            benchmarks_df = pd.read_csv(benchmarks_path)
+            benchmarks = benchmarks_df.to_dict("records")
+
             # Generate animated GIF if requested
             if args.gif:
-                # Load benchmarks for marginal ROI calculation
-                benchmarks_df = pd.read_csv(benchmarks_path)
-                benchmarks = benchmarks_df.to_dict("records")
-
                 print("\nGenerating convergence animation...")
                 gif_path = (
                     output_dir / "optimization_convergence.gif"
@@ -233,6 +231,18 @@ def cmd_visualize(args):
                     fps=args.fps,
                     max_frames=args.max_frames,
                 )
+
+            # Generate budget race animation (bar chart race)
+            print("\nGenerating budget race animation...")
+            budget_race_path = (
+                output_dir / "budget_race.gif" if args.output_dir else "budget_race.gif"
+            )
+            create_budget_race_gif(
+                history,
+                benchmarks,
+                save_path=str(budget_race_path),
+                fps=args.fps,
+            )
 
 
 def main():
@@ -307,8 +317,8 @@ def main():
     viz_parser.add_argument(
         "--fps",
         type=int,
-        default=5,
-        help="Frames per second for GIF animation (default: 5)",
+        default=15,
+        help="Frames per second for GIF animation (default: 15)",
     )
     viz_parser.add_argument(
         "--max-frames",

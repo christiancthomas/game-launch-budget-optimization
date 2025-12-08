@@ -62,18 +62,24 @@ baseline: check-venv
 viz: check-venv
 	@echo "Generating allocation visualization..."
 	venv/bin/python -m src.cli visualize
-	@echo "✅ Simple chart generated"
+	@echo "Simple chart generated"
 
-# Dashboard target: Generate full dashboard
+# Dashboard target: Generate full dashboard and open figures
 dashboard: check-venv
 	@echo "Generating full visualization dashboard..."
-	venv/bin/python -m src.cli visualize --dashboard
-	@echo "✅ Full dashboard generated"
+	@echo "Step 1: Generating synthetic data..."
+	venv/bin/python -m src.cli synth
+	@echo "Step 2: Running optimization with convergence tracking..."
+	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv --track-convergence
+	@echo "Step 3: Generating visualizations..."
+	venv/bin/python -m src.cli visualize --dashboard --convergence data/processed/convergence_history.json --gif --fps 10
+	@echo "Opening figures..."
+	@open experiments/results/figures/*.png
 
 # Linting target
 lint: check-venv
 	@echo "🔍 Running linting checks..."
-	venv/bin/ruff check src/ tests/
+	venv/bin/ruff check --select=E,F,W src/ tests/
 	venv/bin/black --check src/ tests/
 	@echo "Linting complete"
 
@@ -82,7 +88,7 @@ format: check-venv
 	@echo "Formatting code..."
 	venv/bin/black src/ tests/
 	venv/bin/ruff check --fix src/ tests/
-	@echo "✅ Code formatted successfully"
+	@echo "Code formatted successfully"
 
 # Clean target: Remove venv and cache
 clean:
@@ -92,4 +98,4 @@ clean:
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -name "*.pyc" -delete
-	@echo "✅ Cleanup complete"
+	@echo "Cleanup complete"

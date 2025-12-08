@@ -18,9 +18,10 @@ maximize conversions (or revenue).
 
 This project is still in a prototype stage. If you're using this for real budget
 decisions, you should definitely validate the response curves against your
-historical data first. The default parameters are based on what I've seen in gaming but YMMV.
+historical data first. The default parameters are based on what I've seen in gaming but YMMV. 🎮
 
-🎮
+![budget_race](https://github.com/user-attachments/assets/145ab8d3-a2b1-4976-b81b-e60511e53f33)
+_Game Launch Budget Optimization in action_
 
 ## Business Context
 
@@ -77,21 +78,22 @@ I used a Makefile as a wrapper for commonly bundled commands because this is sim
    **Example output:**
 
    ```text
-   🚀 Running budget optimization...
-   💰 Total budget: $100000.0
-   📊 Optimizing 5 channels...
+   Running budget optimization...
+   Total budget: $200000.0
+   Optimizing 5 channels...
 
-   ✅ OPTIMIZATION COMPLETE!
+   **Optimization complete**
+   ============================================================
    OPTIMAL ALLOCATION:
    Channel         | Spend    | Conversions  | CPA
    ------------------------------------------------------------
-   google          | $   6537 |     157 conv | $   42 CPA
-   meta            | $  35000 |    1408 conv | $   25 CPA
-   tiktok          | $  20005 |     545 conv | $   37 CPA
-   reddit          | $  25000 |    1091 conv | $   23 CPA
-   x               | $  13458 |     600 conv | $   22 CPA
+   google          | $  63238 |    1481 conv | $   43 CPA
+   meta            | $  44579 |    1017 conv | $   44 CPA
+   reddit          | $  22795 |     523 conv | $   44 CPA
+   tiktok          | $  67387 |    1735 conv | $   39 CPA
+   x               | $   2000 |      41 conv | $   49 CPA
    ------------------------------------------------------------
-   TOTAL           | $ 100000 |    3801 conv | $   26 CPA
+   TOTAL           | $ 200000 |    4798 conv | $   42 CPA
 
    Budget utilization: 100.0%
    ```
@@ -122,12 +124,9 @@ I used a Makefile as a wrapper for commonly bundled commands because this is sim
 Officially hit all the **V1 milestone goals**!
 
 - **End-to-end optimization pipeline** from synthetic data to optimal budget allocation
-- **Production-ready CLI tools** for data generation and optimization
-- **Comprehensive test coverage** full integration test suite
+- **Handy CLI tools** for data generation, optimization, and visualization
+- **Visualization generation** including response curves, efficiency analysis, and marginal ROI comparison
 - **Mathematical validation** of budget conservation, constraint satisfaction, and business logic
-- **Quality controls** with pre-commit hooks, linting, and enforcement of a consistent style
-
-Future updates will focus on adding more advanced features to handle more complex scenarios.
 
 ### CLI Commands Reference
 
@@ -138,11 +137,15 @@ Future updates will focus on adding more advanced features to handle more comple
 python -m src.cli synth [--config CONFIG_FILE] [--out OUTPUT_CSV]
 
 # Run optimization
-python -m src.cli optimize [--benchmarks CSV_FILE] [--budget AMOUNT] [--output RESULTS_CSV]
+python -m src.cli optimize [--benchmarks CSV_FILE] [--budget AMOUNT] [--output RESULTS_CSV] [--track-convergence]
+
+# Generate visualizations
+python -m src.cli visualize [--dashboard] [--convergence] [--gif] [--fps FPS] [--max-frames N]
 
 # Or use Makefile shortcuts
 make synth      # Generate data only
 make baseline   # Generate data + run optimization
+make dashboard  # Generate full dashboard with animations
 ```
 
 ### Other Useful Commands
@@ -151,6 +154,8 @@ make baseline   # Generate data + run optimization
 - `make test` - runs test suite
 - `make synth` - generates synthetic channel data
 - `make baseline` - generates sample data and runs optimization
+- `make viz` - generates simple allocation chart
+- `make dashboard` - generates full dashboard with all visualizations and animations
 - `make lint` - checks code quality using `ruff` and `black` (for developers)
 - `make format` - auto-formats code (for developers)
 - `make clean` - cleans up virtual environment and cache files
@@ -190,15 +195,18 @@ This quadratic formulation captures the economic reality that additional spend y
 ```tree
 src/                 # Main code
 ├── config/          # YAML configuration and loading
-├── data/            # Sample data & outputs
+├── data/            # Synthetic data generation
 ├── features/        # Mathematical curve modeling
 ├── opt/             # Quadratic programming solver
-├── viz/             # Generated visualizations
+├── utils/           # Animation and helper utilities
+├── viz/             # Visualization functions and styling
 └── cli.py           # Command line interface
 
-tests/
-data/                # Generated datasets and results
-experiments/         # jupyter notebooks
+tests/               # Test suite
+data/                # Generated datasets
+experiments/
+└── results/
+    └── figures/     # Generated charts and animations
 ```
 
 ## Limitations and Next Steps
@@ -213,10 +221,9 @@ This version is a first pass meant to set up the framework. There are some notab
 
 The goal for v1 was to build something clear and working, not final. These notes are here to mark where the project can grow.
 
-### Next Steps (V1.1?)
+### Next Steps
 
-- **Visualizations**: Graphical representations showing allocation breakdowns and potentially sensitivity analysis (likely via notebook usage)
-- **Results Analysis**: Enhanced CLI output with deeper reporting such as efficiency ranking and detailed ROI metrics
+- **Sensitivity Analysis**: "What-if" analysis showing trade-offs between channels at different budget levels
 - **Real Data Integration**: Leverage realistic data for more useful analysis
 
 ### Potential V2 Ideas

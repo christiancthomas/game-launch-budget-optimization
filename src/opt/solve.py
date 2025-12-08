@@ -87,9 +87,35 @@ def solve_qp(benchmarks: list[dict], total_budget: float, track_history: bool = 
     objective_fn = build_objective_function(benchmarks)
     constraints, bounds = build_constraints(benchmarks, total_budget)
 
-    # Initial guess: distribute budget proportionally to max_spend
-    total_max = sum(ch["max_spend"] for ch in benchmarks)
-    x0 = np.array([total_budget * ch["max_spend"] / total_max for ch in benchmarks])
+    # Initial guess: start all channels at minimum, distribute remaining evenly
+    # This creates a more dramatic optimization journey from equal allocation
+    n_channels = len(benchmarks)
+    x0 = np.array([ch["min_spend"] for ch in benchmarks])
+
+    # Distribute remaining budget evenly across all channels (up to their max)
+    remaining = total_budget - np.sum(x0)
+    per_channel = remaining / n_channels
+
+    for i in range(n_channels):
+        headroom = benchmarks[i]["max_spend"] - x0[i]
+        add = min(per_channel, headroom)
+        x0[i] += add
+        remaining -= add
+
+    # If any remaining (due to max constraints), distribute to channels with headroom
+    while remaining > 1e-6:
+        distributed = False
+        for i in range(n_channels):
+            if remaining <= 0:
+                break
+            headroom = benchmarks[i]["max_spend"] - x0[i]
+            if headroom > 0:
+                add = min(remaining, headroom)
+                x0[i] += add
+                remaining -= add
+                distributed = True
+        if not distributed:
+            break
 
     # Set up history tracking if requested
     tracker = (
@@ -104,7 +130,7 @@ def solve_qp(benchmarks: list[dict], total_budget: float, track_history: bool = 
         bounds=bounds,
         constraints=constraints,
         callback=tracker,
-        options={"ftol": 1e-9, "disp": False},
+        options={"ftol": 1e-9, "maxiter": 500, "disp": False},
     )
 
     if not result.success:

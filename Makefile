@@ -67,7 +67,12 @@ viz: check-venv
 # Dashboard target: Generate full dashboard and open figures
 dashboard: check-venv
 	@echo "Generating full visualization dashboard..."
-	venv/bin/python -m src.cli visualize --dashboard
+	@echo "Step 1: Generating synthetic data..."
+	venv/bin/python -m src.cli synth
+	@echo "Step 2: Running optimization with convergence tracking..."
+	venv/bin/python -m src.cli optimize --output data/processed/optimization_results.csv --track-convergence
+	@echo "Step 3: Generating visualizations..."
+	venv/bin/python -m src.cli visualize --dashboard --convergence data/processed/convergence_history.json --gif
 	@echo "Opening figures..."
 	@open experiments/results/figures/*.png
 

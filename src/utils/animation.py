@@ -1,4 +1,8 @@
-"""Animation utilities for creating GIFs from optimization data"""
+"""Animation utilities for creating GIFs from optimization data
+
+There is a bunch of really finicky matplotlib and other data viz code
+here to ensure consistent and high-quality rendering across frames.
+"""
 
 import matplotlib
 
@@ -247,12 +251,12 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
 
 
 def create_budget_race_gif(
-    history: dict,
-    benchmarks: list[dict],
-    save_path: str = "budget_race.gif",
-    fps: int = 10,
-    max_frames: int = 20,
-    interpolate_frames: int = 2,
+    history,
+    benchmarks,
+    save_path="budget_race.gif",
+    fps=10,
+    max_frames=25,
+    interpolate_frames=10,
 ):
     """
     Animated bar chart race showing budget reallocation. Shows
@@ -310,11 +314,18 @@ def _interpolate_budget_race_frames(
     channel_names = [b["channel"] for b in benchmarks]
     all_frames = []
 
+    def get_y_positions(spends):
+        """Get y-position (rank) for each channel based on spend (descending)"""
+        sorted_channels = sorted(channel_names, key=lambda c: spends[c], reverse=True)
+        return {ch: rank for rank, ch in enumerate(sorted_channels)}
+
     for i, idx in enumerate(keyframe_indices):
         # Get current keyframe data
         current_spends = {ch: history[f"spend_{ch}"][idx] for ch in channel_names}
-        current_objective = history["objective"][idx]
         current_iteration = history["iteration"][idx]
+
+        # Calculate y-positions based on current spend ranking
+        current_y = get_y_positions(current_spends)
 
         # Calculate conversions for this state
         current_conversions = sum(
@@ -326,18 +337,24 @@ def _interpolate_budget_race_frames(
             # Interpolate to next keyframe
             next_idx = keyframe_indices[i + 1]
             next_spends = {ch: history[f"spend_{ch}"][next_idx] for ch in channel_names}
-            next_objective = history["objective"][next_idx]
             next_iteration = history["iteration"][next_idx]
+            next_y = get_y_positions(next_spends)
 
             for interp in range(interpolate_frames + 1):
                 t = interp / (interpolate_frames + 1)
 
-                # Linear interpolation
+                # Linear interpolation of spends
                 interp_spends = {
                     ch: current_spends[ch] + t * (next_spends[ch] - current_spends[ch])
                     for ch in channel_names
                 }
-                (current_objective + t * (next_objective - current_objective))
+
+                # Linear interpolation of y-positions (smooth sliding)
+                interp_y = {
+                    ch: current_y[ch] + t * (next_y[ch] - current_y[ch])
+                    for ch in channel_names
+                }
+
                 interp_iteration = int(
                     current_iteration + t * (next_iteration - current_iteration)
                 )
@@ -353,6 +370,7 @@ def _interpolate_budget_race_frames(
                 all_frames.append(
                     {
                         "spends": interp_spends,
+                        "y_positions": interp_y,
                         "conversions": interp_conversions,
                         "iteration": interp_iteration,
                         "total_iterations": history["iteration"][-1],
@@ -363,6 +381,7 @@ def _interpolate_budget_race_frames(
             all_frames.append(
                 {
                     "spends": current_spends,
+                    "y_positions": current_y,
                     "conversions": current_conversions,
                     "iteration": current_iteration,
                     "total_iterations": history["iteration"][-1],
@@ -377,12 +396,13 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
     apply_style()
 
     spends = frame_data["spends"]
+    y_positions = frame_data["y_positions"]
     conversions = frame_data["conversions"]
     iteration = frame_data["iteration"]
     total_iterations = frame_data["total_iterations"]
 
-    # Sort channels by spend (descending) for bar chart race effect
-    sorted_channels = sorted(spends.keys(), key=lambda ch: spends[ch], reverse=True)
+    # Get channel list (order doesn't matter since we use interpolated y-positions)
+    channel_names = list(spends.keys())
 
     # Create figure
     fig, ax = plt.subplots(figsize=(10, 6), dpi=100)
@@ -394,17 +414,17 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
     ax.set_axisbelow(True)
     ax.grid(axis="x", alpha=0.4, zorder=0)
 
-    # Draw horizontal bars
-    range(len(sorted_channels))
+    # Draw horizontal bars using interpolated y-positions for smooth sliding
     bar_height = 0.7
 
-    for i, channel in enumerate(sorted_channels):
+    for channel in channel_names:
         spend = spends[channel]
+        y_pos = y_positions[channel]  # Use interpolated y-position
         color = get_channel_color(channel)
 
         # Draw bar with zorder to render above grid
         ax.barh(
-            i,
+            y_pos,
             spend,
             height=bar_height,
             color=color,
@@ -418,7 +438,7 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
         if spend > max_spend * 0.15:
             ax.text(
                 spend - max_spend * 0.02,
-                i,
+                y_pos,
                 label,
                 va="center",
                 ha="right",
@@ -429,7 +449,7 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
         else:
             ax.text(
                 spend + max_spend * 0.01,
-                i,
+                y_pos,
                 label,
                 va="center",
                 ha="left",
@@ -445,7 +465,7 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
                 if spend > max_spend * 0.15
                 else spend + max_spend * 0.12
             ),
-            i,
+            y_pos,
             format_currency(spend),
             va="center",
             ha="left",
@@ -455,7 +475,7 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
 
     # Style the chart
     ax.set_xlim(0, max_spend)
-    ax.set_ylim(-0.5, len(sorted_channels) - 0.5)
+    ax.set_ylim(-0.5, len(channel_names) - 0.5)
     ax.invert_yaxis()  # Largest at top
     ax.set_yticks([])
     ax.set_xlabel("Budget Allocation", fontsize=12)

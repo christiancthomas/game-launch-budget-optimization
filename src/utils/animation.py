@@ -1,4 +1,4 @@
-"""Animation utilities for creating GIFs from optimization data."""
+"""Animation utilities for creating GIFs from optimization data"""
 
 import matplotlib
 
@@ -6,13 +6,19 @@ matplotlib.use("Agg")  # Use non-interactive backend for consistent rendering
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
-import seaborn as sns  # noqa: E402
 from io import BytesIO  # noqa: E402
 
 import imageio.v2 as imageio  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from src.features.curves import quad_grad  # noqa: E402
+from src.viz.style import (  # noqa: E402
+    apply_style,
+    COLORS,
+    get_channel_color,
+    get_bbox,
+    format_channel_name,
+)
 
 
 def create_convergence_gif(
@@ -90,12 +96,11 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
         rois = [quad_grad(s, bench["curve_a"], bench["curve_b"]) for s in spends]
         marginal_rois[ch_name] = rois
 
-    sns.set_theme(style="whitegrid", palette="deep")
-    sns.set_context("notebook", font_scale=1.1)
+    # Apply Gamesight style
+    apply_style()
 
     fig = plt.figure(figsize=(12, 8), dpi=100)
     gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
-    palette = sns.color_palette("deep")
 
     # Top left: Objective progress
     ax1 = fig.add_subplot(gs[0, 0])
@@ -103,22 +108,23 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
         iterations,
         objectives,
         linewidth=2.5,
-        color=palette[2],
+        color=COLORS["primary"],
         marker="o",
         markersize=4,
     )
     ax1.set_xlabel("Iteration")
     ax1.set_ylabel("Total Conversions")
     ax1.set_title("Objective Function Progress")
-    ax1.grid(True, alpha=0.3)
+    ax1.grid(True, alpha=0.4)
 
+    # Highlight current point
     ax1.scatter(
         [iterations[-1]],
         [objectives[-1]],
-        color="red",
+        color=COLORS["red"],
         s=150,
         zorder=5,
-        edgecolors="black",
+        edgecolors="white",
         linewidth=2,
     )
 
@@ -131,30 +137,31 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
             f"Iter: {iterations[-1]}/{history['iteration'][-1]}",
             transform=ax1.transAxes,
             verticalalignment="top",
-            bbox=dict(boxstyle="round", facecolor="lightgreen", alpha=0.7),
+            fontsize=9,
+            bbox=get_bbox("success"),
         )
 
     # Top right: Marginal ROI convergence (KKT optimality condition)
     ax2 = fig.add_subplot(gs[0, 1])
 
-    roi_colors = sns.color_palette("husl", len(benchmarks))
-    for i, (ch_name, rois) in enumerate(marginal_rois.items()):
+    for ch_name, rois in marginal_rois.items():
+        ch_color = get_channel_color(ch_name)
         ax2.plot(
             iterations,
             rois,
             linewidth=2,
-            label=ch_name.title(),
-            color=roi_colors[i],
+            label=format_channel_name(ch_name),
+            color=ch_color,
             marker="o",
             markersize=3,
         )
         ax2.scatter(
             [iterations[-1]],
             [rois[-1]],
-            color=roi_colors[i],
+            color=ch_color,
             s=100,
             zorder=5,
-            edgecolors="black",
+            edgecolors="white",
             linewidth=1.5,
         )
 
@@ -162,7 +169,7 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
     ax2.set_ylabel("Marginal ROI (conv/$)")
     ax2.set_title("Marginal ROI Convergence")
     ax2.legend(loc="best", fontsize=8)
-    ax2.grid(True, alpha=0.3)
+    ax2.grid(True, alpha=0.4)
 
     ax2.text(
         0.98,
@@ -171,25 +178,25 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
         transform=ax2.transAxes,
         ha="right",
         va="bottom",
-        bbox=dict(boxstyle="round", facecolor="yellow", alpha=0.3),
         fontsize=8,
+        bbox=get_bbox("warning"),
     )
 
     # Bottom: Channel allocation evolution
     ax3 = fig.add_subplot(gs[1, :])
 
-    channel_names = [k for k in history.keys() if k.startswith("spend_")]
-    colors = sns.color_palette("husl", len(channel_names))
+    channel_keys = [k for k in history.keys() if k.startswith("spend_")]
 
-    for i, ch_key in enumerate(channel_names):
+    for ch_key in channel_keys:
         channel_name = ch_key.replace("spend_", "")
+        ch_color = get_channel_color(channel_name)
         spend_history = history[ch_key][: up_to_idx + 1]
         ax3.plot(
             iterations,
             spend_history,
             linewidth=2,
-            label=channel_name.title(),
-            color=colors[i],
+            label=format_channel_name(channel_name),
+            color=ch_color,
             marker="o",
             markersize=3,
         )
@@ -197,23 +204,23 @@ def _render_frame(history: dict, benchmarks: list[dict], up_to_idx: int):
         ax3.scatter(
             [iterations[-1]],
             [spend_history[-1]],
-            color=colors[i],
+            color=ch_color,
             s=100,
             zorder=5,
-            edgecolors="black",
+            edgecolors="white",
             linewidth=1.5,
         )
 
     ax3.set_xlabel("Iteration")
-    ax3.set_ylabel("Channel Spend ($)")
+    ax3.set_ylabel("Channel Spend")
     ax3.set_title("Budget Allocation Evolution")
-    ax3.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    ax3.grid(True, alpha=0.3)
+    ax3.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=9)
+    ax3.grid(True, alpha=0.4)
 
     plt.suptitle(
         f"Optimization Convergence (Iteration {iterations[-1]})",
         fontsize=16,
-        fontweight="bold",
+        fontweight="semibold",
     )
 
     # Use PIL to ensure consistent frame dimensions across iterations

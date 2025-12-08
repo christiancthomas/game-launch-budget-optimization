@@ -18,13 +18,13 @@ channels:
     min_spend: 2000.0
     max_spend: 100000.0
 
-  - name: "tiktok"
-    min_spend: 2000.0
-    max_spend: 100000.0
-
   - name: "reddit"
     min_spend: 2000.0
     max_spend: 80000.0
+
+  - name: "tiktok"
+    min_spend: 2000.0
+    max_spend: 100000.0
 
   - name: "x" # formerly Twitter
     min_spend: 2000.0

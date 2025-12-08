@@ -317,8 +317,8 @@ def main():
     viz_parser.add_argument(
         "--fps",
         type=int,
-        default=5,
-        help="Frames per second for GIF animation (default: 5)",
+        default=15,
+        help="Frames per second for GIF animation (default: 15)",
     )
     viz_parser.add_argument(
         "--max-frames",

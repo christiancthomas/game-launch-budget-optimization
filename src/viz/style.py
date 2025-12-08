@@ -159,6 +159,11 @@ def format_currency(value: float, decimals: int = 0):
         return f"${value:.{decimals}f}"
 
 
+def format_currency_precise(value: float):
+    """Format currency with commas and cents (e.g., $42,123.45)"""
+    return f"${value:,.2f}"
+
+
 def format_channel_name(name):
     special_cases = {"x": "X", "tiktok": "TikTok"}
     lower = name.lower()

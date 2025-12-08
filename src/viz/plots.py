@@ -88,8 +88,9 @@ def plot_allocation_breakdown(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()
 
 
 def plot_channel_curves(
@@ -203,8 +204,9 @@ def plot_channel_curves(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()
 
 
 def plot_efficiency_analysis(
@@ -291,8 +293,9 @@ def plot_efficiency_analysis(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()
 
 
 def plot_marginal_roi_comparison(
@@ -371,8 +374,9 @@ def plot_marginal_roi_comparison(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()
 
 
 def create_full_dashboard(
@@ -396,8 +400,6 @@ def create_full_dashboard(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    print("Generating visualization dashboard...")
-
     # Set matplotlib to non-interactive if not showing
     if not show_plots:
         plt.ioff()
@@ -418,17 +420,6 @@ def create_full_dashboard(
     plot_marginal_roi_comparison(
         benchmarks_df, results_df, save_path=output_path / "marginal_roi_comparison.png"
     )
-
-    # Summary stats for CLI output
-    total_budget = results_df["optimal_spend"].sum()
-    total_conversions = results_df["predicted_conversions"].sum()
-    avg_cpa = total_budget / total_conversions if total_conversions > 0 else 0
-
-    print("\nOPTIMIZATION SUMMARY:")
-    print(f"   Total Budget: ${total_budget:,.0f}")
-    print(f"   Total Conversions: {total_conversions:,.0f}")
-    print(f"   Portfolio CPA: ${avg_cpa:.0f}")
-    print(f"   Channels Optimized: {len(results_df)}")
 
 
 def plot_simple_allocation_bar(
@@ -471,8 +462,9 @@ def plot_simple_allocation_bar(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()
 
 
 def plot_optimization_convergence(
@@ -595,5 +587,6 @@ def plot_optimization_convergence(
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-
-    plt.show()
+        plt.close()
+    else:
+        plt.show()

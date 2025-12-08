@@ -4,11 +4,15 @@ There is a bunch of really finicky matplotlib and other data viz code
 here to ensure consistent and high-quality rendering across frames.
 """
 
+import warnings
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend for consistent rendering
 
 import matplotlib.pyplot as plt  # noqa: E402
+
+# Suppress tight_layout warnings for gridspec figures
+warnings.filterwarnings("ignore", message=".*tight_layout.*", category=UserWarning)
 import numpy as np  # noqa: E402
 from io import BytesIO  # noqa: E402
 
@@ -23,6 +27,7 @@ from src.viz.style import (  # noqa: E402
     get_bbox,
     format_channel_name,
     format_currency,
+    format_currency_precise,
 )
 
 
@@ -48,8 +53,6 @@ def create_convergence_gif(
 
     frame_indices = _get_frame_indices(n_iterations, max_frames)
 
-    print(f"Generating {len(frame_indices)} frames for convergence GIF...")
-
     frames = []
     for idx in frame_indices:
         frame = _render_frame(history, benchmarks, idx)
@@ -61,13 +64,6 @@ def create_convergence_gif(
     durations[-1] = 2000
 
     imageio.mimsave(save_path, frames, duration=durations, loop=0)
-
-    total_duration = (len(frames) - 1) / fps + 2.0  # Regular frames + 2s pause
-    print(f"Convergence GIF saved to: {save_path}")
-    print(
-        f"   {len(frames)} frames @ {fps} fps + 2s pause = "
-        f"{total_duration:.1f}s animation"
-    )
 
 
 def _get_frame_indices(n_iterations: int, max_frames: int = None):
@@ -254,9 +250,9 @@ def create_budget_race_gif(
     history,
     benchmarks,
     save_path="budget_race.gif",
-    fps=10,
-    max_frames=25,
-    interpolate_frames=10,
+    fps=15,
+    max_frames=None,  # Use all iterations
+    interpolate_frames=3,  # ~3 iterations/sec at 15fps
 ):
     """
     Animated bar chart race showing budget reallocation. Shows
@@ -282,8 +278,6 @@ def create_budget_race_gif(
         history, benchmarks, keyframe_indices, interpolate_frames
     )
 
-    print(f"Generating {len(all_frame_data)} frames for budget race GIF...")
-
     frames = []
     for frame_data in all_frame_data:
         frame = _render_budget_race_frame(frame_data, benchmarks)
@@ -295,13 +289,6 @@ def create_budget_race_gif(
     durations[-1] = 2500  # 2.5s pause at end
 
     imageio.mimsave(save_path, frames, duration=durations, loop=0)
-
-    total_duration = (len(frames) - 1) / fps + 2.5
-    print(f"Budget race GIF saved to: {save_path}")
-    print(
-        f"   {len(frames)} frames @ {fps} fps + 2.5s pause = "
-        f"{total_duration:.1f}s animation"
-    )
 
 
 def _interpolate_budget_race_frames(
@@ -315,8 +302,16 @@ def _interpolate_budget_race_frames(
     all_frames = []
 
     def get_y_positions(spends):
-        """Get y-position (rank) for each channel based on spend (descending)"""
-        sorted_channels = sorted(channel_names, key=lambda c: spends[c], reverse=True)
+        """Get y-position (rank) for each channel based on spend (descending).
+        Uses alphabetical order as tiebreaker when spends are within tolerance."""
+        tolerance = 100  # Treat spends within $100 as equal for ordering
+        sorted_channels = sorted(
+            channel_names,
+            key=lambda c: (
+                -round(spends[c] / tolerance),
+                c,
+            ),  # bucket by tolerance, then alpha
+        )
         return {ch: rank for rank, ch in enumerate(sorted_channels)}
 
     for i, idx in enumerate(keyframe_indices):
@@ -466,10 +461,10 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
                 else spend + max_spend * 0.12
             ),
             y_pos,
-            format_currency(spend),
+            format_currency_precise(spend),
             va="center",
             ha="left",
-            fontsize=11,
+            fontsize=10,
             color=COLORS["text_secondary"],
         )
 
@@ -491,8 +486,9 @@ def _render_budget_race_frame(frame_data: dict, benchmarks: list[dict]):
         transform=ax.transAxes,
         ha="right",
         va="bottom",
-        fontsize=10,
-        color=COLORS["text_muted"],
+        fontsize=12,
+        fontweight="semibold",
+        color=COLORS["text_secondary"],
     )
 
     ax.text(

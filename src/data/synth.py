@@ -14,34 +14,34 @@ import random
 # - The optimizer must carefully balance allocations rather than just max/min
 CHANNEL_PROFILES = {
     "google": {
-        "cpc_multiplier": 1.02,  # slightly higher pricing
-        "ctr_multiplier": 1.00,  # baseline engagement
-        "cvr_multiplier": 1.03,  # good conversion (intent)
-        "saturation_rate": 0.18,  # slow saturation (massive scale)
+        "cpc_multiplier": 1.15,  # premium pricing (search intent)
+        "ctr_multiplier": 1.05,  # moderate engagement
+        "cvr_multiplier": 1.50,  # excellent conversion (high intent)
+        "saturation_rate": 0.15,  # slow saturation (massive scale)
     },
     "meta": {
-        "cpc_multiplier": 1.00,  # baseline pricing
-        "ctr_multiplier": 1.01,  # baseline engagement
-        "cvr_multiplier": 1.00,  # baseline conversion
-        "saturation_rate": 0.22,  # moderate saturation
-    },
-    "tiktok": {
-        "cpc_multiplier": 0.98,  # slightly cheaper
-        "ctr_multiplier": 1.02,  # good engagement
-        "cvr_multiplier": 0.99,  # slightly lower conversion
+        "cpc_multiplier": 0.95,  # competitive pricing
+        "ctr_multiplier": 1.20,  # strong engagement (social)
+        "cvr_multiplier": 1.05,  # decent conversion
         "saturation_rate": 0.20,  # moderate saturation
     },
     "reddit": {
-        "cpc_multiplier": 1.01,  # baseline pricing
-        "ctr_multiplier": 0.98,  # moderate engagement
-        "cvr_multiplier": 1.02,  # good conversion
-        "saturation_rate": 0.24,  # faster saturation (niche)
+        "cpc_multiplier": 0.80,  # cheap clicks
+        "ctr_multiplier": 0.85,  # lower engagement (niche)
+        "cvr_multiplier": 1.25,  # good conversion (community trust)
+        "saturation_rate": 0.30,  # fast saturation (smaller audience)
+    },
+    "tiktok": {
+        "cpc_multiplier": 0.70,  # very cheap (emerging platform)
+        "ctr_multiplier": 1.35,  # excellent engagement (viral content)
+        "cvr_multiplier": 0.85,  # lower conversion
+        "saturation_rate": 0.25,  # moderate-fast saturation
     },
     "x": {
-        "cpc_multiplier": 0.99,  # competitive pricing
-        "ctr_multiplier": 0.99,  # average engagement
-        "cvr_multiplier": 1.01,  # average conversion
-        "saturation_rate": 0.23,  # moderate saturation
+        "cpc_multiplier": 0.85,  # competitive pricing
+        "ctr_multiplier": 0.95,  # moderate engagement
+        "cvr_multiplier": 0.98,  # moderate conversion
+        "saturation_rate": 0.26,  # faster saturation (declining reach)
     },
 }
 
